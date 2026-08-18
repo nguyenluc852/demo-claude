@@ -20,6 +20,9 @@
       "Bash(git log:*)",
       "Bash(git show:*)",
       "Bash(git branch)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
@@ -28,7 +31,6 @@
       "Bash(find:*)"
     ],
     "deny": [
-      "Bash(git push:*)",
       "Bash(git reset --hard:*)",
       "Bash(git clean:*)",
       "Bash(rm -rf:*)",
