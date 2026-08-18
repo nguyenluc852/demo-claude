@@ -15,6 +15,11 @@ python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
 
+# These ship no type information; the wrappers around them are annotated instead.
+[[tool.mypy.overrides]]
+module = ["reportlab.*", "apscheduler.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

@@ -1,0 +1,175 @@
+"""Outbound mail: the HTML invoice and the tenant verification link.
+
+With no SMTP host configured the mailer logs the message instead of sending it,
+so a dev machine needs no mail server to exercise the flows that trigger email.
+"""
+
+import logging
+from email.message import EmailMessage
+
+import aiosmtplib
+
+from app.core.config import settings
+from app.core.constants import ServiceCode
+from app.core.messages import EmailTemplate
+from app.schemas.invoice import InvoiceSchema
+
+logger = logging.getLogger(__name__)
+
+_STYLE_PAGE = (
+    "margin:0;padding:24px;background:#f1f5f9;"
+    "font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;"
+)
+_STYLE_CARD = (
+    "max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;"
+    "overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.12);"
+)
+_STYLE_HEADER = (
+    "padding:28px 32px;color:#ffffff;"
+    "background:linear-gradient(135deg,#0f766e 0%,#0891b2 55%,#6366f1 100%);"
+)
+_STYLE_BODY = "padding:28px 32px;"
+_STYLE_TABLE = "width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;"
+_STYLE_TH = (
+    "text-align:left;padding:10px 12px;background:#f1f5f9;"
+    "border-bottom:2px solid #e2e8f0;font-weight:600;"
+)
+_STYLE_TD = "padding:10px 12px;border-bottom:1px solid #e2e8f0;"
+_STYLE_TD_NUM = _STYLE_TD + "text-align:right;font-variant-numeric:tabular-nums;"
+_STYLE_TOTAL = (
+    "margin:20px 0;padding:18px 20px;border-radius:12px;background:#ecfeff;"
+    "border:1px solid #a5f3fc;"
+)
+_STYLE_BANK = (
+    "margin-top:20px;padding:16px 20px;border-radius:12px;"
+    "background:#fffbeb;border:1px solid #fde68a;font-size:14px;"
+)
+_STYLE_BUTTON = (
+    "display:inline-block;padding:13px 26px;border-radius:10px;background:#0891b2;"
+    "color:#ffffff;text-decoration:none;font-weight:600;"
+)
+_STYLE_FOOTER = "padding:18px 32px;background:#f8fafc;color:#64748b;font-size:12px;"
+
+_BANK_LINES = (
+    "Ngân hàng: Vietcombank — Chi nhánh Hà Nội",
+    "Số tài khoản: 0123456789",
+    "Chủ tài khoản: BAN QUAN LY NHA TRO",
+    "Nội dung: {room_number} {period}",
+)
+
+
+def _money(amount: float) -> str:
+    return f"{amount:,.0f}{EmailTemplate.CURRENCY_SUFFIX}"
+
+
+def _number(value: float | None) -> str:
+    return "—" if value is None else f"{value:,.0f}"
+
+
+async def send_email(to: str, subject: str, html_body: str) -> None:
+    """Deliver one message, or log it when SMTP is not configured."""
+    if not settings.smtp_enabled:
+        logger.info("SMTP disabled — email to %s not sent. Subject: %s", to, subject)
+        logger.debug("Body:\n%s", html_body)
+        return
+
+    message = EmailMessage()
+    message["From"] = settings.smtp_from
+    message["To"] = to
+    message["Subject"] = subject
+    message.set_content(html_body, subtype="html")
+
+    await aiosmtplib.send(
+        message,
+        hostname=settings.smtp_host,
+        port=settings.smtp_port,
+        username=settings.smtp_user or None,
+        password=settings.smtp_password or None,
+        start_tls=settings.smtp_use_tls,
+    )
+
+
+def _shell(header_title: str, header_subtitle: str, body: str) -> str:
+    return (
+        f'<div style="{_STYLE_PAGE}"><div style="{_STYLE_CARD}">'
+        f'<div style="{_STYLE_HEADER}">'
+        f'<div style="font-size:22px;font-weight:700;">{header_title}</div>'
+        f'<div style="opacity:.9;margin-top:6px;">{header_subtitle}</div>'
+        f"</div>"
+        f'<div style="{_STYLE_BODY}">{body}</div>'
+        f'<div style="{_STYLE_FOOTER}">{EmailTemplate.INVOICE_FOOTER}</div>'
+        f"</div></div>"
+    )
+
+
+def render_verification_email(verify_url: str) -> str:
+    body = (
+        f"<p>{EmailTemplate.VERIFY_INTRO}</p>"
+        f'<p style="margin:24px 0;">'
+        f'<a href="{verify_url}" style="{_STYLE_BUTTON}">{EmailTemplate.VERIFY_ACTION}</a>'
+        f"</p>"
+        f'<p style="color:#475569;font-size:14px;">'
+        f"{EmailTemplate.VERIFY_CREDENTIALS_NOTE}</p>"
+    )
+    return _shell(EmailTemplate.VERIFY_HEADING, verify_url, body)
+
+
+def _meter_rows(invoice: InvoiceSchema) -> str:
+    """Metered lines show old/new readings; fixed fees show a plain quantity."""
+    rows: list[str] = [
+        f'<tr><td style="{_STYLE_TD}">{EmailTemplate.ROW_RENT}</td>'
+        f'<td style="{_STYLE_TD_NUM}">—</td>'
+        f'<td style="{_STYLE_TD_NUM}">—</td>'
+        f'<td style="{_STYLE_TD_NUM}">1</td>'
+        f'<td style="{_STYLE_TD_NUM}">{_money(invoice.room_charge)}</td>'
+        f'<td style="{_STYLE_TD_NUM}"><b>{_money(invoice.room_charge)}</b></td></tr>'
+    ]
+    for line in invoice.lines:
+        is_metered = line.code in (ServiceCode.ELECTRICITY, ServiceCode.WATER)
+        rows.append(
+            f'<tr><td style="{_STYLE_TD}">{line.name}</td>'
+            f'<td style="{_STYLE_TD_NUM}">{_number(line.meter_old) if is_metered else "—"}</td>'
+            f'<td style="{_STYLE_TD_NUM}">{_number(line.meter_new) if is_metered else "—"}</td>'
+            f'<td style="{_STYLE_TD_NUM}">{_number(line.quantity)}</td>'
+            f'<td style="{_STYLE_TD_NUM}">{_money(line.unit_price)}</td>'
+            f'<td style="{_STYLE_TD_NUM}"><b>{_money(line.amount)}</b></td></tr>'
+        )
+    return "".join(rows)
+
+
+def render_invoice_email(invoice: InvoiceSchema) -> str:
+    headers = "".join(
+        f'<th style="{_STYLE_TH}">{label}</th>'
+        for label in (
+            EmailTemplate.COL_DESCRIPTION,
+            EmailTemplate.COL_OLD,
+            EmailTemplate.COL_NEW,
+            EmailTemplate.COL_USAGE,
+            EmailTemplate.COL_UNIT_PRICE,
+            EmailTemplate.COL_AMOUNT,
+        )
+    )
+    room_number = invoice.room_number or ""
+    bank = "<br>".join(
+        line.format(room_number=room_number, period=invoice.period) for line in _BANK_LINES
+    )
+
+    subtitle = EmailTemplate.INVOICE_INTRO.format(
+        room_number=room_number, period=invoice.period
+    )
+    body = (
+        f"<p>{EmailTemplate.INVOICE_GREETING.format(tenant_name=invoice.tenant_name or '')}</p>"
+        f"<p>{subtitle}</p>"
+        f'<table style="{_STYLE_TABLE}"><thead><tr>{headers}</tr></thead>'
+        f"<tbody>{_meter_rows(invoice)}</tbody></table>"
+        f'<div style="{_STYLE_TOTAL}">'
+        f'<div style="color:#0e7490;font-size:13px;">{EmailTemplate.INVOICE_TOTAL_LABEL}</div>'
+        f'<div style="font-size:28px;font-weight:800;color:#0f172a;">{_money(invoice.total)}</div>'
+        f'<div style="color:#475569;font-size:13px;margin-top:6px;">'
+        f"{EmailTemplate.INVOICE_DUE_LABEL}: {invoice.due_date:%d/%m/%Y}</div>"
+        f"</div>"
+        f'<div style="{_STYLE_BANK}">'
+        f'<div style="font-weight:700;margin-bottom:8px;">'
+        f"{EmailTemplate.INVOICE_BANK_HEADING}</div>{bank}</div>"
+    )
+    return _shell(EmailTemplate.INVOICE_HEADING, subtitle, body)

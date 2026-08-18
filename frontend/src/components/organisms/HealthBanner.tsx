@@ -19,13 +19,13 @@ export function HealthBanner() {
   }
 
   if (status === STATUS.failed || data?.status !== HEALTH_STATUS_OK) {
-    return <StatusBadge label={STRINGS.health.offline} tone="danger" />
+    return <StatusBadge label={STRINGS.health.offline} tone="occupied" />
   }
 
   return (
     <StatusBadge
       label={`${STRINGS.health.online} (${STRINGS.health.versionLabel} ${data.version})`}
-      tone="success"
+      tone="positive"
     />
   )
 }

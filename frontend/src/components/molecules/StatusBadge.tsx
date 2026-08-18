@@ -1,10 +1,11 @@
-import { Text } from '../atoms'
+import { Badge } from '../atoms'
+import type { BadgeStatus } from '../atoms'
 
 interface StatusBadgeProps {
   label: string
-  tone: 'default' | 'muted' | 'danger' | 'success'
+  tone: BadgeStatus
 }
 
 export function StatusBadge({ label, tone }: StatusBadgeProps) {
-  return <Text tone={tone}>{label}</Text>
+  return <Badge label={label} status={tone} />
 }

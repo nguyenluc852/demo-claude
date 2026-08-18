@@ -29,3 +29,20 @@ class NotFoundError(AppError):
 class ConflictError(AppError):
     status_code = status.HTTP_409_CONFLICT
     code = ErrorCode.CONFLICT
+
+
+class BadRequestError(AppError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = ErrorCode.BAD_REQUEST
+
+
+class UnauthorizedError(AppError):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    code = ErrorCode.UNAUTHORIZED
+    message = ErrorMessage.NOT_AUTHENTICATED
+
+
+class ForbiddenError(AppError):
+    status_code = status.HTTP_403_FORBIDDEN
+    code = ErrorCode.FORBIDDEN
+    message = ErrorMessage.FORBIDDEN

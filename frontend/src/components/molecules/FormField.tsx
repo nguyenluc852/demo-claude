@@ -9,8 +9,8 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function FormField({ label, name, ...rest }: FormFieldProps) {
   return (
-    <label htmlFor={name}>
-      {label}
+    <label className="field" htmlFor={name}>
+      <span>{label}</span>
       <Input id={name} name={name} {...rest} />
     </label>
   )

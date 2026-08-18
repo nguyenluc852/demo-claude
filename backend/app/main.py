@@ -1,3 +1,6 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +13,23 @@ from app.common.schemas import ErrorDetail, ErrorResponse
 from app.core.config import settings
 from app.core.constants import ApiPrefix, AppMeta
 from app.core.messages import ErrorCode, ErrorMessage
+from app.db import mongo
+from app.services import scheduler
+from app.services.service_setting import service_setting_service
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Own the Mongo connection and the monthly mailer for the process lifetime."""
+    await mongo.connect()
+    await service_setting_service.ensure_defaults()
+    scheduler.start()
+    try:
+        yield
+    finally:
+        scheduler.shutdown()
+        await mongo.close()
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -17,6 +37,7 @@ app = FastAPI(
     debug=settings.debug,
     docs_url=AppMeta.DOCS_URL,
     openapi_url=AppMeta.OPENAPI_URL,
+    lifespan=lifespan,
 )
 
 app.add_middleware(

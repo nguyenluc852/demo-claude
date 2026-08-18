@@ -10,13 +10,13 @@ interface PageTemplateProps {
 /** Layout only — templates hold no state and never touch the store. */
 export function PageTemplate({ title, subtitle, status, children }: PageTemplateProps) {
   return (
-    <main>
+    <>
       <header>
         <h1>{title}</h1>
-        {subtitle ? <p>{subtitle}</p> : null}
+        {subtitle ? <p data-tone="muted">{subtitle}</p> : null}
         {status}
       </header>
       {children}
-    </main>
+    </>
   )
 }
