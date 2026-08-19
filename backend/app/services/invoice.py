@@ -9,13 +9,14 @@ Each line snapshots the unit price it was billed at, so later edits to master
 data leave issued invoices untouched.
 """
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from bson import ObjectId
 
 from app.common.documents import serialize, to_object_id
-from app.common.exceptions import BadRequestError, NotFoundError
+from app.common.exceptions import BadRequestError, EmailDeliveryError, NotFoundError
 from app.common.money import to_vnd
 from app.core.config import settings
 from app.core.constants import (
@@ -31,6 +32,8 @@ from app.db.mongo import get_collection
 from app.schemas.invoice import InvoiceLine, InvoiceSchema
 from app.services.email import render_invoice_email, send_email
 from app.services.service_setting import service_setting_service
+
+logger = logging.getLogger(__name__)
 
 
 def _fixed_quantity(unit: str, occupants: int) -> float:
@@ -250,6 +253,12 @@ class InvoiceService:
                 await self.send(invoice_id)
             except BadRequestError:
                 # A contract with no address cannot be mailed; the rest still go.
+                continue
+            except EmailDeliveryError:
+                # One rejected address must not abort the batch, and the monthly
+                # cron must not go red over it — send() leaves the invoice in
+                # DRAFT, so the next run picks it up again.
+                logger.warning("Invoice %s could not be mailed; left as draft.", invoice_id)
                 continue
             sent += 1
         return sent

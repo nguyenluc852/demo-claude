@@ -1,16 +1,17 @@
 """Outbound mail: the HTML invoice and the tenant verification link.
 
-With no SMTP host configured the mailer logs the message instead of sending it,
-so a dev machine needs no mail server to exercise the flows that trigger email.
+Delivery goes through the Resend HTTP API. With no API key configured the
+mailer logs the message instead of sending it, so a dev machine needs no mail
+account to exercise the flows that trigger email.
 """
 
 import logging
-from email.message import EmailMessage
 
-import aiosmtplib
+import httpx
 
+from app.common.exceptions import EmailDeliveryError
 from app.core.config import settings
-from app.core.constants import ServiceCode, Smtp
+from app.core.constants import AuthScheme, Header, Resend, ServiceCode
 from app.core.messages import EmailTemplate
 from app.schemas.invoice import InvoiceLine, InvoiceSchema
 
@@ -68,30 +69,37 @@ def _number(value: float | None) -> str:
 
 
 async def send_email(to: str, subject: str, html_body: str) -> None:
-    """Deliver one message, or log it when SMTP is not configured."""
-    if not settings.smtp_enabled:
-        logger.info("SMTP disabled — email to %s not sent. Subject: %s", to, subject)
+    """Deliver one message, or log it when no mail credential is configured."""
+    if not settings.email_enabled:
+        logger.info("Email disabled — message to %s not sent. Subject: %s", to, subject)
         logger.debug("Body:\n%s", html_body)
         return
 
-    message = EmailMessage()
-    message["From"] = settings.smtp_from
-    message["To"] = to
-    message["Subject"] = subject
-    message.set_content(html_body, subtype="html")
+    payload = {
+        Resend.FIELD_FROM: settings.email_from,
+        Resend.FIELD_TO: [to],
+        Resend.FIELD_SUBJECT: subject,
+        Resend.FIELD_HTML: html_body,
+    }
+    headers = {Header.AUTHORIZATION: f"{AuthScheme.BEARER} {settings.resend_api_key}"}
 
-    # Port 465 is TLS from the first byte; anything else negotiates STARTTLS.
-    # Offering STARTTLS on 465 never gets a reply, so the send hangs then fails.
-    implicit_tls = settings.smtp_port == Smtp.IMPLICIT_TLS_PORT
-    await aiosmtplib.send(
-        message,
-        hostname=settings.smtp_host,
-        port=settings.smtp_port,
-        username=settings.smtp_user or None,
-        password=settings.smtp_password or None,
-        use_tls=settings.smtp_use_tls and implicit_tls,
-        start_tls=settings.smtp_use_tls and not implicit_tls,
-    )
+    try:
+        async with httpx.AsyncClient(timeout=Resend.TIMEOUT_SECONDS) as client:
+            response = await client.post(Resend.API_URL, json=payload, headers=headers)
+    except httpx.HTTPError as exc:
+        # Network-level failure. The key lives in a header, so nothing secret
+        # reaches the log here.
+        logger.error("Mail provider unreachable for %s: %s", to, exc)
+        raise EmailDeliveryError from exc
+
+    if response.is_error:
+        logger.error(
+            "Mail provider rejected the message to %s: %s %s",
+            to,
+            response.status_code,
+            response.text,
+        )
+        raise EmailDeliveryError
 
 
 def _shell(header_title: str, header_subtitle: str, body: str) -> str:

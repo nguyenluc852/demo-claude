@@ -14,10 +14,10 @@ from app.core.constants import ApiPrefix, AuthScheme, Collection, Header, Route
 settings.mongodb_db = f"{settings.mongodb_db}_test"
 
 # Same reasoning for outbound mail. Signing a contract sends a verification
-# email, so a developer with real SMTP credentials in .env would have the suite
-# mail strangers from their own account on every run. Clearing the host makes
+# email, so a developer with a real mail credential in .env would have the suite
+# mail strangers from their own account on every run. Clearing the key makes
 # services/email.py log the message instead — the flows still run end to end.
-settings.smtp_host = ""
+settings.resend_api_key = ""
 
 from app.main import app  # noqa: E402  (import order is deliberate, see above)
 from app.services.item import item_service  # noqa: E402

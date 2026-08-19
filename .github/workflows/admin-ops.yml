@@ -41,7 +41,7 @@ jobs:
       SEED_ADMIN_EMAIL: ${{ vars.SEED_ADMIN_EMAIL }}
       SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
       # Script nào lỡ khởi tạo mailer cũng chỉ ghi log, không gửi thật.
-      SMTP_HOST: ""
+      RESEND_API_KEY: ""
 
     steps:
       - uses: actions/checkout@v4

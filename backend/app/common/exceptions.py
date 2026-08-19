@@ -46,3 +46,16 @@ class ForbiddenError(AppError):
     status_code = status.HTTP_403_FORBIDDEN
     code = ErrorCode.FORBIDDEN
     message = ErrorMessage.FORBIDDEN
+
+
+class EmailDeliveryError(AppError):
+    """The mail provider refused or never answered.
+
+    502 rather than 500: the request was fine, an upstream service was not.
+    Callers that mail in bulk catch this per message so one bad address cannot
+    abort the batch.
+    """
+
+    status_code = status.HTTP_502_BAD_GATEWAY
+    code = ErrorCode.EMAIL_FAILED
+    message = ErrorMessage.EMAIL_SEND_FAILED

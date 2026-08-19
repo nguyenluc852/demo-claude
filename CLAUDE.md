@@ -161,7 +161,9 @@ Quy trình đầy đủ nằm trong `DEPLOY.md` — đây chỉ là những gì 
 
 ## Email và lập lịch
 
-`services/email.py` gửi mail qua `aiosmtplib`. **Nếu `SMTP_HOST` không được đặt, nó
+`services/email.py` gửi mail qua HTTP API của Resend (`httpx`, port 443) — **không phải
+SMTP**: Render chặn outbound 25/465/587 ở tầng network nên mọi lần gửi qua SMTP đều
+timeout sau 60 giây. **Nếu `RESEND_API_KEY` không được đặt, nó
 ghi log nội dung thay vì gửi thật**, nên không cần mail server để chạy thử các luồng
 có gửi email. `services/scheduler.py` chạy một cron job APScheduler duy nhất, gửi hóa
 đơn nháp hằng tháng; lifespan khởi động và dừng nó để một lần reload không làm chạy

@@ -45,7 +45,7 @@ tên `production`, thêm required reviewers nếu muốn mỗi lần deploy ph�
 | `SEED_ADMIN_USERNAME` | variable | mặc định `admin` |
 | `SEED_ADMIN_EMAIL` | variable | email của tài khoản admin |
 
-Biến runtime của backend (`MONGODB_URL`, `SMTP_*`, `JWT_SECRET`) vẫn nằm ở dashboard
+Biến runtime của backend (`MONGODB_URL`, `RESEND_API_KEY`, `JWT_SECRET`) vẫn nằm ở dashboard
 Render, không đi qua Actions — deploy hook chỉ bảo Render build lại.
 
 ### Đổi mật khẩu admin mà không lộ ra ngoài
@@ -84,12 +84,18 @@ này, rồi điền các biến `sync: false`:
 | `MONGODB_URL` | Connection string Atlas ở bước 1 |
 | `PUBLIC_BASE_URL` | Đã có sẵn trong `render.yaml`: `https://claudedom.vercel.app` |
 | `CORS_ORIGINS` | Đã có sẵn trong `render.yaml` — nhớ giữ dạng mảng JSON nếu đổi |
-| `SMTP_*` | Bỏ trống nếu chưa cần gửi mail thật |
+| `RESEND_API_KEY` | API key ở resend.com → API Keys. Bỏ trống nếu chưa cần gửi mail thật |
+| `EMAIL_FROM` | Địa chỉ gửi, phải thuộc domain đã verify trong Resend |
 
 `JWT_SECRET` để Render tự sinh. **Đổi nó sau này sẽ làm mọi token hiện có hết hiệu lực.**
 
-Bỏ trống `SMTP_HOST` thì `services/email.py` ghi log nội dung thay vì gửi — luồng ký
-hợp đồng và gửi hoá đơn vẫn chạy được đầy đủ.
+Bỏ trống `RESEND_API_KEY` thì `services/email.py` ghi log nội dung thay vì gửi — luồng
+ký hợp đồng và gửi hoá đơn vẫn chạy được đầy đủ.
+
+> **Đừng quay lại SMTP.** Render chặn outbound 25/465/587 ở tầng network trên gói free:
+> kết nối không bị từ chối mà rơi vào hư không, nên mỗi lần gửi treo đúng 60 giây rồi
+> ném `SMTPConnectTimeoutError`. Đổi port hay đổi chế độ TLS không cứu được. Đó là lý do
+> mailer đi qua HTTPS.
 
 > **Gói free ngủ sau 15 phút không có request.** Scheduler chỉ chạy khi process còn
 > sống, nên job hoá đơn hằng tháng không bao giờ nổ trên gói free. Vì thế `render.yaml`

@@ -14,6 +14,7 @@ class ErrorCode:
     UNAUTHORIZED: Final = "UNAUTHORIZED"
     FORBIDDEN: Final = "FORBIDDEN"
     BAD_REQUEST: Final = "BAD_REQUEST"
+    EMAIL_FAILED: Final = "EMAIL_FAILED"
 
 
 class ErrorMessage:
@@ -34,6 +35,7 @@ class ErrorMessage:
     USER_NOT_FOUND: Final = "Không tìm thấy tài khoản"
     CANNOT_DELETE_SELF: Final = "Không thể xóa tài khoản đang đăng nhập"
     INVALID_CRON_SECRET: Final = "Khóa lập lịch không hợp lệ"
+    EMAIL_SEND_FAILED: Final = "Không gửi được email. Vui lòng thử lại sau."
 
     # Rooms
     ROOM_NOT_FOUND: Final = "Không tìm thấy phòng"

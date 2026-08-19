@@ -21,12 +21,10 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:5173"
 
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
-    smtp_from: str = "no-reply@motel.local"
-    smtp_use_tls: bool = True
+    # Mail goes out over the Resend HTTP API. Empty key means the mailer logs
+    # the message instead of sending it, so a dev machine needs no credential.
+    resend_api_key: str = ""
+    email_from: str = "no-reply@motel.local"
 
     invoice_cron_day: int = 5
     invoice_cron_hour: int = 8
@@ -47,9 +45,9 @@ class Settings(BaseSettings):
     seed_admin_password: str = ""
 
     @property
-    def smtp_enabled(self) -> bool:
-        """Without a host the mailer logs instead of sending, so dev needs no server."""
-        return bool(self.smtp_host)
+    def email_enabled(self) -> bool:
+        """Without a key the mailer logs instead of sending, so dev needs no account."""
+        return bool(self.resend_api_key)
 
     @property
     def payment_due_days(self) -> int:

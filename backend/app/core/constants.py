@@ -250,14 +250,21 @@ class Business:
     PERIOD_FORMAT: Final = "%Y-%m"
 
 
-class Smtp:
-    """Which TLS handshake a port implies.
+class Resend:
+    """The mail provider's HTTP API.
 
-    465 speaks TLS from the first byte (SMTPS); 587 starts in the clear and
-    upgrades with STARTTLS. Sending the wrong one hangs until the peer drops.
+    Mail leaves over HTTPS rather than SMTP because the hosting plan blocks
+    outbound 25/465/587 at the network layer — a TLS setting cannot get around
+    that, but port 443 is never blocked.
     """
 
-    IMPLICIT_TLS_PORT: Final = 465
+    API_URL: Final = "https://api.resend.com/emails"
+    TIMEOUT_SECONDS: Final = 15.0
+    # Payload keys the API defines; structural, like the Mongo field names.
+    FIELD_FROM: Final = "from"
+    FIELD_TO: Final = "to"
+    FIELD_SUBJECT: Final = "subject"
+    FIELD_HTML: Final = "html"
 
 
 class Header:
