@@ -1,0 +1,51 @@
+name: Invoice dispatch
+
+# Cron ngoài cho job gửi hoá đơn nháp hằng tháng.
+#
+# APScheduler trong lifespan (services/scheduler.py) chỉ chạy khi process còn
+# sống, mà gói free của Render ngủ sau 15 phút không có request — nên trên
+# production nó không bao giờ nổ. Workflow này gọi
+# POST /api/v1/invoices/dispatch, đúng cùng một invoice_service.send_pending().
+#
+# Gọi lặp là vô hại: send_pending() chỉ quét hoá đơn DRAFT, còn send() đẩy chúng
+# sang UNPAID.
+on:
+  schedule:
+    # 01:00 UTC = 08:00 giờ VN, ngày 5 hằng tháng — khớp INVOICE_CRON_DAY=5 /
+    # INVOICE_CRON_HOUR=8 mà scheduler trong process dùng.
+    - cron: "0 1 5 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: invoice-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: POST /invoices/dispatch
+        env:
+          # URL công khai của backend trên Render, ví dụ
+          # https://demo-claude-r8ml.onrender.com
+          API: ${{ vars.RENDER_API_URL }}
+          # Đúng giá trị đã đặt cho CRON_SECRET ở dashboard Render.
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$API" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Thiếu biến RENDER_API_URL hoặc secret CRON_SECRET" >&2
+            exit 1
+          fi
+
+          # Request đầu tiên phải đánh thức instance đang ngủ, có thể mất tới một
+          # phút; --retry bọc luôn cả trường hợp đó.
+          body=$(curl --fail --silent --show-error \
+                      --retry 3 --retry-delay 20 --retry-connrefused \
+                      --max-time 120 \
+                      --request POST \
+                      --header "X-Cron-Secret: $CRON_SECRET" \
+                      "$API/api/v1/invoices/dispatch")
+
+          # Body chỉ chứa số hoá đơn đã gửi, không có gì bí mật.
+          echo "$body"

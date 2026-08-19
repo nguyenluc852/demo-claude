@@ -22,6 +22,10 @@ services:
     healthCheckPath: /api/v1/health
     region: singapore
     plan: free
+    # Deploy do .github/workflows/deploy.yml kích hoạt qua deploy hook, sau khi
+    # CI xanh. Để Render tự deploy theo push thì code chưa qua test cũng lên
+    # production, và hai bản deploy sẽ chạy chồng nhau.
+    autoDeploy: false
     envVars:
       # Paste the MongoDB Atlas connection string in the Render dashboard.
       # mongodb+srv:// works because dnspython arrives with email-validator.
@@ -61,4 +65,20 @@ services:
       - key: SMTP_PASSWORD
         sync: false
       - key: SMTP_FROM
+        sync: false
+
+      # Gói free ngủ giữa các request, nên APScheduler trong lifespan không bao
+      # giờ sống tới ngày nổ job. Tắt nó đi và để cron ngoài gọi
+      # POST /api/v1/invoices/dispatch — cùng một invoice_service.send_pending(),
+      # không phải nhánh logic thứ hai. Nâng lên Starter thì đổi lại thành true
+      # và tắt workflow invoice-dispatch.yml, đừng chạy song song cả hai.
+      - key: SCHEDULER_ENABLED
+        # Quoted: một boolean YAML trần có thể tới backend thành "False", còn
+        # pydantic chỉ nhận "false"/"0"/"no".
+        value: "false"
+
+      # Secret dùng chung cho header X-Cron-Secret của endpoint dispatch. Điền ở
+      # dashboard Render, và dán đúng giá trị đó vào GitHub Secret CRON_SECRET.
+      # Để trống thì CronDep từ chối mọi request — fail closed, không bao giờ mở.
+      - key: CRON_SECRET
         sync: false

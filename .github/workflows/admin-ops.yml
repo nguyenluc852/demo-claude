@@ -1,0 +1,75 @@
+name: Admin ops
+
+# Chạy tay các script quản trị (`backend/scripts/`) trên database production mà
+# KHÔNG phải dán connection string Atlas hay mật khẩu admin vào terminal của bạn.
+#
+# Đó là lý do file này tồn tại: secret chỉ nằm trong GitHub Secrets của
+# environment `production`, được nạp vào tiến trình dưới dạng biến môi trường, và
+# không script nào in giá trị ra — xem .claude/rules/secrets-from-env.md.
+#
+# Đổi mật khẩu admin = cập nhật secret SEED_ADMIN_PASSWORD rồi chạy
+# `set-admin-password`. Mật khẩu mới không bao giờ đi qua máy bạn dưới dạng lệnh
+# shell, nên không nằm lại trong shell history.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Script cần chạy"
+        required: true
+        type: choice
+        options:
+          - seed
+          - set-admin-password
+          - set-admin-email
+
+jobs:
+  run:
+    name: ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    # Bật required reviewers cho environment này nếu muốn mỗi lần chạy phải có
+    # người duyệt.
+    environment: production
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      MONGODB_URL: ${{ secrets.MONGODB_URL }}
+      MONGODB_DB: ${{ vars.MONGODB_DB || 'motel' }}
+      SEED_ADMIN_USERNAME: ${{ vars.SEED_ADMIN_USERNAME || 'admin' }}
+      SEED_ADMIN_EMAIL: ${{ vars.SEED_ADMIN_EMAIL }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+      # Script nào lỡ khởi tạo mailer cũng chỉ ghi log, không gửi thật.
+      SMTP_HOST: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check secrets
+        run: |
+          if [ -z "$MONGODB_URL" ]; then
+            echo "Thiếu secret MONGODB_URL" >&2
+            exit 1
+          fi
+
+      - name: Seed demo data
+        if: inputs.action == 'seed'
+        run: python -m scripts.seed
+
+      - name: Set admin password
+        if: inputs.action == 'set-admin-password'
+        run: python -m scripts.set_admin_password
+
+      - name: Set admin email
+        if: inputs.action == 'set-admin-email'
+        run: python -m scripts.set_admin_email

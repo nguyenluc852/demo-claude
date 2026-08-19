@@ -16,6 +16,9 @@ dist/
 .env.*
 !.env.example
 
+# Vercel CLI link (chứa org/project id, lấy ra từ `vercel link`)
+.vercel/
+
 # Editor / OS
 .DS_Store
 .vscode/
