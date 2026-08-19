@@ -34,17 +34,17 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
-      # Where verification links in tenant emails point — the Vercel URL,
-      # not this API's. Set after the frontend is deployed.
+      # Where verification links in tenant emails point — the Vercel URL, not
+      # this API's. Left unset, links point at localhost and tenants cannot
+      # verify their email at all.
       - key: PUBLIC_BASE_URL
-        sync: false
+        value: https://claudedom.vercel.app
 
-      # Pydantic parses list fields as JSON, so this must be a JSON array:
-      #   ["https://your-app.vercel.app"]
+      # Pydantic parses list fields as JSON, so this stays a JSON array.
       # Only needed if something reaches the API cross-origin; the Vercel
       # rewrite itself is server-side and involves no preflight.
       - key: CORS_ORIGINS
-        sync: false
+        value: '["https://claudedom.vercel.app"]'
 
       # Leave SMTP_HOST unset and services/email.py logs the message instead of
       # sending it — the app runs fine without a mail server.
