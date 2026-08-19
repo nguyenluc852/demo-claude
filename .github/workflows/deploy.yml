@@ -122,6 +122,15 @@ jobs:
           # lệch nghĩa là secret dính ký tự thừa.
           echo "độ dài: org=${#VERCEL_ORG_ID} project=${#VERCEL_PROJECT_ID}"
 
+      # Tách "token có hợp lệ không" khỏi "token có thấy project không".
+      # whoami hỏng = token sai hoặc hết hạn; whoami chạy được mà pull hỏng =
+      # token đúng nhưng không thuộc scope chứa project.
+      - name: Who is this token
+        run: |
+          vercel whoami --token="$VERCEL_TOKEN"
+          echo "--- project trong scope này ---"
+          vercel project ls --token="$VERCEL_TOKEN"
+
       # `vercel build` đọc vercel.json ở gốc repo — cùng buildCommand và
       # rewrites như khi deploy tay, nên không có đường build thứ hai.
       - name: Pull project settings
