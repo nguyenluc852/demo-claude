@@ -10,7 +10,7 @@ applies-to: frontend/src/index.css, frontend/src/components/**, frontend/src/pag
 utility framework**. Đọc phần chú thích ở đầu file đó trước khi đổi bất cứ thứ gì về
 hình ảnh. Với việc thiết kế ở quy mô lớn hơn, hãy nạp skill `frontend-design`.
 
-Định hướng là **sáng và thoáng**: nền trắng ngà, panel tím pastel, một màu nhấn tím
+Định hướng là **sáng và thoáng**: nền trắng ngà, panel cam pastel, một màu nhấn cam
 duy nhất. Không gian được chia bằng **panel bo góc và bóng mềm**, không phải đường kẻ
 — viền chỉ xuất hiện ở chỗ hai control không được phép nhìn nhầm thành một.
 
@@ -19,12 +19,15 @@ Bo góc rộng tay và nút bo tròn hoàn toàn thành viên thuốc. Nhưng co
 
 ## Ràng buộc
 
-- Màu bão hòa chỉ được dùng ở hai chỗ: `--violet-600` cho hành động chính và lỗi, và
+- **`--orange-600` là màu nền, không phải màu chữ.** Chữ trắng trên nó chỉ đạt 2.3:1;
+  mọi thứ nằm *trên* màu nhấn phải dùng `--slate-900` (7.7:1). Cần màu nhấn cho chữ
+  trên nền trắng thì dùng `--orange-700` — nó vượt 4.5:1, còn 600 thì không.
+- Màu bão hòa chỉ được dùng ở hai chỗ: `--orange-600` cho hành động chính và lỗi, và
   bốn màu trạng thái phòng mà SRS đã chốt (xanh lá còn trống, đỏ đang thuê, hổ phách
   đang bảo trì, tím đang nợ). **Thêm màu nhấn thứ ba là một bước lùi.**
   `--sage-*` và `--sand-*` là màu phụ trợ rất nhạt cho xác nhận và cảnh báo, không
   phải màu nhấn — đừng nâng chúng lên thành nhân vật chính.
-- Nhóm token màu: `--slate-*` (thang trung tính, ngả nhẹ sang tím), `--violet-*`
+- Nhóm token màu: `--slate-*` (thang trung tính ấm), `--orange-*`
   (nhấn), `--status-*` (SRS chốt). Toàn bộ token chỉ được dùng trong `index.css`;
   **không component nào đọc token màu trực tiếp.**
 - Vai trò của chữ: `--font-display` (Bricolage Grotesque, tiêu đề), `--font-body`

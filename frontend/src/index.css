@@ -16,30 +16,32 @@
  */
 
 :root {
-  /* Neutral ramp, warmed towards lilac so it sits under the accent quietly. */
-  --slate-900: #17142a;
-  --slate-800: #241f3d;
-  --slate-700: #3a3357;
-  --slate-600: #565073;
-  --slate-400: #837e9c;
-  --slate-300: #b3aecb;
-  --slate-200: #e0dcef;
-  --slate-100: #efedf7;
-  --slate-050: #f7f6fb;
+  /* Neutral ramp, warmed so it sits under the orange without going grey-blue. */
+  --slate-900: #23190f;
+  --slate-800: #33261a;
+  --slate-700: #4c3b2b;
+  --slate-600: #6b5a4a;
+  --slate-400: #96897c;
+  --slate-300: #c2b8ae;
+  --slate-200: #e8e1d9;
+  --slate-100: #f3efea;
+  --slate-050: #faf8f5;
 
-  /* The one accent. Primary actions, links, and errors share it. */
-  --violet-700: #4c3d9e;
-  --violet-600: #6350c8;
-  --violet-300: #b6a9f0;
-  --violet-100: #ded6fa;
-  --violet-050: #f0ecfd;
+  /* The one accent, a soft orange.
+     600 is a surface colour only: white on it reads at 2.3:1, so anything
+     sitting ON the accent takes --slate-900 (7.7:1) instead. 700 is the text
+     weight — it clears 4.5:1 on white, which 600 does not. */
+  --orange-700: #c2551f;
+  --orange-600: #ef944f;
+  --orange-300: #f8c9a1;
+  --orange-100: #fde4cf;
+  --orange-050: #fdf3ea;
 
-  /* Quiet supports: sage for confirmation, sand for a warning. */
+  /* Quiet supports: sage confirms, sand warns. Kept deliberately desaturated
+     so neither competes with the accent for attention. */
   --sage-600: #3f8a63;
   --sage-050: #eaf6ef;
-  --sand-600: #a8730f;
-  --sand-500: #cf9422;
-  --sand-400: #e5ae3c;
+  --sand-600: #96690e;
 
   /* Room status — mandated by the spec. */
   --status-available: #16a34a;
@@ -49,16 +51,16 @@
 
   --color-text: var(--slate-900);
   --color-muted: var(--slate-400);
-  --color-danger: var(--violet-700);
+  --color-danger: var(--orange-700);
   --color-success: var(--sage-600);
   --color-border: var(--slate-200);
   --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-canvas: #f6f5fa;
-  --color-accent: var(--violet-600);
+  --color-canvas: #faf7f3;
+  --color-accent: var(--orange-600);
 
   /* The pastel panel the hero and the feature blocks sit on. */
-  --panel-tint: var(--violet-050);
+  --panel-tint: var(--orange-050);
 
   --font-display: 'Bricolage Grotesque', 'Be Vietnam Pro', system-ui, sans-serif;
   --font-body: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
@@ -102,18 +104,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-text: #efedf7;
+    --color-text: #f3efea;
     --color-muted: var(--slate-300);
-    --color-danger: var(--violet-300);
+    --color-danger: var(--orange-300);
     --color-success: #7fd0a3;
-    --color-border: #35305a;
+    --color-border: #4a3a2c;
     --color-bg: var(--slate-900);
     --color-surface: var(--slate-800);
     --color-canvas: var(--slate-900);
-    --color-accent: var(--violet-600);
+    --color-accent: var(--orange-600);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 8px 28px rgb(0 0 0 / 0.45);
-    --panel-tint: #2b2450;
+    --panel-tint: #3a2a1c;
     --band-overlay: linear-gradient(180deg, rgb(12 9 26 / 0.82), rgb(12 9 26 / 0.92));
   }
 }
@@ -196,7 +198,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--violet-600);
+  outline: 2px solid var(--orange-600);
   outline-offset: 2px;
 }
 
@@ -209,14 +211,15 @@ textarea:focus-visible {
   background: var(--slate-700);
 }
 
+/* Dark label on the accent: white on this orange is 2.3:1 and unreadable. */
 [data-variant='accent'] {
-  background: var(--violet-600);
-  color: #fff;
+  background: var(--orange-600);
+  color: var(--slate-900);
   font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
 [data-variant='accent']:hover:not(:disabled) {
-  background: var(--violet-700);
+  background: var(--orange-700);
 }
 
 [data-variant='secondary'] {
@@ -488,22 +491,30 @@ tbody tr:hover {
 
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
+  /* Capped low enough that a full VND figure keeps its currency suffix on the
+     same line — at 1.5rem the "đ" wrapped onto a line of its own. */
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 /* --- The room board: the signature element ---------------------------- */
 
 .room-board {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  /* 11rem, not 9.5: the contract-expiry line filled a 9.5rem tile edge to
+     edge, which reads as overflow even when it technically fits. */
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
   gap: var(--space-3);
 }
 
 .room-tile {
   position: relative;
+  /* Grid items default to min-width:auto, so the longest meta line was
+     stretching the tile past its column instead of ellipsing inside it. */
+  min-width: 0;
   text-align: left;
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
   border-radius: var(--radius);
@@ -588,7 +599,7 @@ tbody tr:hover {
 
 .tab[aria-selected='true'] {
   color: var(--color-text);
-  border-bottom-color: var(--violet-600);
+  border-bottom-color: var(--orange-600);
   font-weight: 600;
 }
 
@@ -666,7 +677,7 @@ tbody tr:hover {
   width: 1.1rem;
   height: 1.1rem;
   border-radius: 999px;
-  border: 2px solid var(--violet-600);
+  border: 2px solid var(--orange-600);
   border-top-color: transparent;
   animation: spin 700ms linear infinite;
 }
@@ -779,28 +790,21 @@ tbody tr:hover {
 }
 
 .admin-sidebar {
-  background: var(--slate-800);
-  color: var(--slate-100);
-  border-right: 3px double var(--slate-600);
+  background: var(--color-canvas);
+  color: var(--color-text);
+  border-right: 1px solid var(--color-border);
   padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
 }
 
-.admin-brand {
-  font-family: var(--font-display);
-  font-weight: 750;
-  letter-spacing: -0.02em;
-  font-size: 1.05rem;
-  color: #fff;
-}
-
 .admin-brand small {
   display: block;
+  margin-top: var(--space-2);
   font-weight: 400;
   font-size: 0.75rem;
-  color: var(--slate-300);
+  color: var(--color-muted);
   letter-spacing: 0;
 }
 
@@ -812,27 +816,29 @@ tbody tr:hover {
 
 .admin-nav a {
   text-decoration: none;
-  color: var(--slate-300);
-  padding: 0.5rem 0.7rem;
-  border-radius: 2px;
+  color: var(--slate-600);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-pill);
   font-size: 0.9rem;
 }
 
 .admin-nav a:hover {
-  color: #fff;
-  background: rgb(255 255 255 / 0.06);
+  color: var(--color-text);
+  background: var(--slate-100);
 }
 
+/* The current page is the only tinted thing in the rail, so it reads at a
+   glance without the rail itself competing with the content beside it. */
 .admin-nav a[aria-current='page'] {
-  color: var(--slate-050);
-  background: var(--violet-600);
+  color: var(--slate-900);
+  background: var(--orange-100);
   font-weight: 600;
 }
 
 .admin-foot {
   margin-top: auto;
   font-size: 0.8rem;
-  color: var(--slate-300);
+  color: var(--color-muted);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -1045,13 +1051,13 @@ tbody tr:hover {
 .room-card:hover,
 .room-card:focus-within {
   box-shadow: var(--shadow-md);
-  border-color: var(--violet-600);
+  border-color: var(--orange-600);
   transform: translateY(-2px);
 }
 
 /* Ring only for keyboard focus: a plain click already shows the modal. */
 .room-card:has(:focus-visible) {
-  outline: 2px solid var(--violet-600);
+  outline: 2px solid var(--orange-600);
   outline-offset: 2px;
 }
 
@@ -1257,7 +1263,7 @@ tbody tr:hover {
   font-size: 0.74rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--sand-400);
+  color: var(--orange-300);
 }
 
 .property-band h2 {
@@ -1427,7 +1433,7 @@ tbody tr:hover {
   display: block;
   font-size: 1.6rem;
   font-weight: 600;
-  color: var(--violet-600);
+  color: var(--orange-600);
   line-height: 1;
 }
 
@@ -1522,7 +1528,7 @@ tbody tr:hover {
 }
 
 .contact-info dt .icon {
-  color: var(--violet-600);
+  color: var(--orange-600);
 }
 
 .contact-info dd {
@@ -1604,7 +1610,7 @@ tbody tr:hover {
   padding: var(--space-5);
   /* A wash of the accent rather than ruled paper, so signing in feels like
      part of the same product as the homepage. */
-  background: radial-gradient(120% 90% at 50% 0%, var(--violet-050), var(--color-canvas) 65%);
+  background: radial-gradient(120% 90% at 50% 0%, var(--orange-050), var(--color-canvas) 65%);
 }
 
 .auth-card {
@@ -1684,4 +1690,26 @@ tbody tr:hover {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* --- Brand mark ------------------------------------------------------- */
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text);
+}
+
+.logo-mark {
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: var(--radius-sm);
+}
+
+.logo strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
 }

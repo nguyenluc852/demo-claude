@@ -24,9 +24,12 @@ const RANGE_OPTIONS = [
 ] as const
 
 const CHART_HEIGHT = 320
-const COLOR_ROOM = '#0d9488'
-const COLOR_SERVICE = '#f59e0b'
-const COLOR_COLLECTED = '#1c2942'
+/* Colour belongs in index.css, so the series read the tokens rather than
+   carrying their own hex. Three series need three separations: the accent, the
+   support green, and plain ink. */
+const COLOR_ROOM = 'var(--orange-600)'
+const COLOR_SERVICE = 'var(--sage-600)'
+const COLOR_COLLECTED = 'var(--slate-900)'
 
 export function RevenueChart() {
   const dispatch = useAppDispatch()

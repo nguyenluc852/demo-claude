@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { ROUTE_PATH, SLICE, STRINGS, USER_ROLE } from '../../constants'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { logout } from '../../store/slices/authSlice'
-import { Button, Text } from '../atoms'
+import { Button, Logo, Text } from '../atoms'
 import { roleLabel } from '../../utils/labels'
 
 const LINKS = [
@@ -23,7 +23,7 @@ export function AdminSidebar() {
   return (
     <aside className="admin-sidebar">
       <div className="admin-brand">
-        {STRINGS.app.title}
+        <Logo />
         <small>{STRINGS.app.tagline}</small>
       </div>
 

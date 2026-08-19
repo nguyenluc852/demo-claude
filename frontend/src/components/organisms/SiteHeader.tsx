@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ROUTE_PATH, SLICE, STRINGS, USER_ROLE } from '../../constants'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { logout } from '../../store/slices/authSlice'
-import { Button, Text } from '../atoms'
+import { Button, Logo, Text } from '../atoms'
 import { roleLabel } from '../../utils/labels'
 
 /** Public header. Signed in, it routes the visitor to the area their role owns. */
@@ -18,7 +18,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link to={ROUTE_PATH.home}>
-        <strong>{STRINGS.app.title}</strong>
+        <Logo />
       </Link>
       <nav className="toolbar">
         {user ? (
