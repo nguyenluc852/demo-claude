@@ -71,7 +71,14 @@ def _number(value: float | None) -> str:
 async def send_email(to: str, subject: str, html_body: str) -> None:
     """Deliver one message, or log it when no mail credential is configured."""
     if not settings.email_enabled:
-        logger.info("Email disabled — message to %s not sent. Subject: %s", to, subject)
+        # Name the missing half. Guessing which one is unset costs a deploy cycle.
+        missing = "RESEND_API_KEY" if not settings.resend_api_key else "EMAIL_FROM"
+        logger.info(
+            "Email disabled (%s not set) — message to %s not sent. Subject: %s",
+            missing,
+            to,
+            subject,
+        )
         logger.debug("Body:\n%s", html_body)
         return
 

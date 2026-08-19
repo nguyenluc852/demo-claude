@@ -21,10 +21,16 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:5173"
 
-    # Mail goes out over the Resend HTTP API. Empty key means the mailer logs
-    # the message instead of sending it, so a dev machine needs no credential.
+    # Mail goes out over the Resend HTTP API. Either value missing means the
+    # mailer logs the message instead of sending it, so a dev machine needs no
+    # credential.
+    #
+    # email_from has no default on purpose. A plausible-looking one
+    # ("no-reply@motel.local") is worse than none: the provider accepts the
+    # request, then rejects every message because the domain is not verified,
+    # and the deployment looks configured while nothing is delivered.
     resend_api_key: str = ""
-    email_from: str = "no-reply@motel.local"
+    email_from: str = ""
 
     invoice_cron_day: int = 5
     invoice_cron_hour: int = 8
@@ -46,8 +52,8 @@ class Settings(BaseSettings):
 
     @property
     def email_enabled(self) -> bool:
-        """Without a key the mailer logs instead of sending, so dev needs no account."""
-        return bool(self.resend_api_key)
+        """Both halves are required: a key with no sender address cannot deliver."""
+        return bool(self.resend_api_key and self.email_from)
 
     @property
     def payment_due_days(self) -> int:

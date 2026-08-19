@@ -85,7 +85,12 @@ này, rồi điền các biến `sync: false`:
 | `PUBLIC_BASE_URL` | Đã có sẵn trong `render.yaml`: `https://claudedom.vercel.app` |
 | `CORS_ORIGINS` | Đã có sẵn trong `render.yaml` — nhớ giữ dạng mảng JSON nếu đổi |
 | `RESEND_API_KEY` | API key ở resend.com → API Keys. Bỏ trống nếu chưa cần gửi mail thật |
-| `EMAIL_FROM` | Địa chỉ gửi, phải thuộc domain đã verify trong Resend |
+| `EMAIL_FROM` | Địa chỉ gửi, phải thuộc domain đã verify trong Resend. Chưa có domain thì dùng `onboarding@resend.dev` — nó chỉ gửi được tới email chủ tài khoản Resend |
+
+Thiếu **một trong hai** biến trên thì mailer ở chế độ ghi log, và log nói rõ thiếu biến
+nào. Đó là lựa chọn có chủ ý: `EMAIL_FROM` từng có default `no-reply@motel.local`, và
+một bản deploy quên đặt biến trông y như đang chạy tốt trong khi Resend từ chối mọi thư
+với `domain is not verified`.
 
 `JWT_SECRET` để Render tự sinh. **Đổi nó sau này sẽ làm mọi token hiện có hết hiệu lực.**
 

@@ -57,7 +57,11 @@ services:
       # sending it — every flow still runs, the mail just never leaves.
       - key: RESEND_API_KEY
         sync: false
-      # Must be on a domain verified in Resend, or mail is rejected.
+      # Must be on a domain verified in Resend, or the provider rejects every
+      # message with "domain is not verified". onboarding@resend.dev needs no
+      # verified domain but only delivers to the Resend account's own address.
+      # Leaving this unset keeps the mailer in log mode — deliberate, so a half
+      # configured deployment does not look like a working one.
       - key: EMAIL_FROM
         sync: false
 
