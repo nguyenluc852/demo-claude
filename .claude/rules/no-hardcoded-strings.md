@@ -34,3 +34,16 @@ thì phải sửa bên kia trong cùng một lần chỉnh sửa.
 
 Dùng `Literal` của Pydantic sẽ buộc phải lặp lại các giá trị enum đó xuống tầng schema,
 nên schema validate bằng `one_of(value, SomeEnum.ALL)` thay vì `Literal`.
+
+## Nợ kỹ thuật đã biết
+
+`"email_verified"` vẫn là literal ở 8 chỗ trong tầng service (`services/user.py` ×4,
+`services/auth.py` ×3, `services/contract.py` ×1). Đây đúng loại defect mà rule này
+cấm — key của document phải là hằng trong `Field`. Đã biết và cố ý hoãn, chưa dọn.
+
+Dọn nốt thì thêm `Field.EMAIL_VERIFIED` vào `core/constants.py` rồi đổi cả 8 chỗ; bộ
+test đỡ lưng nên rủi ro thấp. Đừng dọn lẻ tẻ giữa một thay đổi không liên quan — hoặc
+làm trọn cả 8, hoặc để nguyên.
+
+(Literal `"email_verified"` trong `app/schemas/*.py` thì hợp lệ: đó là tên thuộc tính
+Pydantic, không phải key tra cứu.)

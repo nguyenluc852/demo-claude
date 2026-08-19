@@ -82,6 +82,36 @@ MONGODB_URL='mongodb+srv://...' .venv/bin/python -m scripts.seed
 Tạo một admin, tám phòng, năm hợp đồng, ba kỳ đã xuất hoá đơn. Không có dữ liệu phòng
 thì trang chủ hiện trạng thái rỗng và dải toà nhà đếm ra 0.
 
+`SEED_ADMIN_PASSWORD` bắt buộc phải có, seed từ chối chạy nếu thiếu — xem rule
+`.claude/rules/secrets-from-env.md`.
+
+### 6. Xoay thông tin đăng nhập admin trên Atlas
+
+`seed.py` chỉ **tạo** operator, gặp tài khoản đã tồn tại thì bỏ qua, nên nó không sửa
+được tài khoản có sẵn. Hai script riêng làm việc đó, chạy từ máy bạn và trỏ vào Atlas
+đúng như lệnh seed ở trên:
+
+```bash
+cd backend
+
+# Đổi mật khẩu
+MONGODB_URL='mongodb+srv://...' \
+  SEED_ADMIN_EMAIL='admin@smart.dev' \
+  SEED_ADMIN_PASSWORD='<mật khẩu mới>' \
+  .venv/bin/python -m scripts.set_admin_password
+
+# Đổi email (tìm tài khoản theo SEED_ADMIN_USERNAME, mặc định "admin")
+MONGODB_URL='mongodb+srv://...' \
+  SEED_ADMIN_EMAIL='admin@smart.dev' \
+  .venv/bin/python -m scripts.set_admin_email
+```
+
+Cả hai in ra tên database đang tác động trước khi ghi, và không in mật khẩu. Chạy lại
+là vô hại: `set_admin_email` báo "already …; nothing to do" nếu email đã đúng.
+
+Đừng dán connection string Atlas vào chỗ nào được commit — nó chỉ nên xuất hiện trong
+shell của bạn và trong dashboard Render.
+
 ## Kiểm tra sau khi deploy
 
 1. Trang chủ không hiện banner "API unreachable".

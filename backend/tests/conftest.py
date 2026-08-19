@@ -25,7 +25,10 @@ from app.services.item import item_service  # noqa: E402
 API = f"{ApiPrefix.ROOT}{ApiPrefix.V1}"
 
 ADMIN_EMAIL = "admin@motel.example.com"
-ADMIN_PASSWORD = "admin123"
+# Fixture-only, on the throwaway test database. Deliberately not a password
+# anyone would be tempted to reuse — the real seed operator comes from
+# SEED_ADMIN_PASSWORD in the environment.
+ADMIN_PASSWORD = "pytest-fixture-only"
 
 _MANAGED_COLLECTIONS = (
     Collection.USERS,

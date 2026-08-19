@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 from bson import ObjectId
 
 from app.common.periods import current_period, shift_period
+from app.core.config import settings
 from app.core.constants import (
     Collection,
     Field,
@@ -34,8 +35,25 @@ from app.services.room import room_service
 from app.services.service_setting import service_setting_service
 from app.services.user import user_service
 
-# Not a .local address: that TLD is reserved, and EmailStr rejects it.
-ADMIN = UserCreate(username="admin", email="admin@smart.dev", password="admin123")
+
+def admin_account() -> UserCreate:
+    """The seed operator, from the environment — never a literal in this file.
+
+    Refuses to invent a password: a default here would be committed, and every
+    deployment that ran the seed would share it.
+    """
+    if not settings.seed_admin_password:
+        raise SystemExit(
+            "SEED_ADMIN_PASSWORD is not set. Put one in backend/.env "
+            "(see .env.example) and run the seed again."
+        )
+    # Not a .local address: that TLD is reserved, and EmailStr rejects it.
+    return UserCreate(
+        username=settings.seed_admin_username,
+        email=settings.seed_admin_email,
+        password=settings.seed_admin_password,
+    )
+
 
 IMAGES = {
     RoomType.STUDIO: [
@@ -102,6 +120,9 @@ MAINTENANCE_ROOM = "302"
 
 
 async def seed() -> None:
+    # Before the connection, so a missing password fails fast and loudly.
+    admin = admin_account()
+
     await mongo.connect()
     await service_setting_service.ensure_defaults()
 
@@ -109,11 +130,13 @@ async def seed() -> None:
     # that already has an operator) must not try to insert a second one.
     users = mongo.get_collection(Collection.USERS)
     taken = await users.find_one(
-        {"$or": [{Field.EMAIL: ADMIN.email}, {Field.USERNAME: ADMIN.username}]}
+        {"$or": [{Field.EMAIL: admin.email}, {Field.USERNAME: admin.username}]}
     )
     if taken is None:
-        await user_service.create_staff(ADMIN, role=UserRole.ADMIN)
-        print(f"admin created: {ADMIN.email} / {ADMIN.password}")
+        await user_service.create_staff(admin, role=UserRole.ADMIN)
+        # The password is not echoed: it belongs to the operator's .env, and
+        # this output ends up in terminal scrollback and CI logs.
+        print(f"admin created: {admin.email}")
     else:
         print(f"admin already present: {taken[Field.EMAIL]}")
 
@@ -196,7 +219,7 @@ async def seed() -> None:
 
     await mongo.close()
     print("\nSeed complete.")
-    print(f"  Sign in at /login as {ADMIN.email} / {ADMIN.password}")
+    print(f"  Sign in at /login as {admin.email} with SEED_ADMIN_PASSWORD")
     print(
         f"  Tenants sign in with their email and their phone number as the password, "
         f"e.g. {TENANTS[0][4]} / {TENANTS[0][3]}"

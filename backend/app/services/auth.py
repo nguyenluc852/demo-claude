@@ -46,7 +46,7 @@ class AuthService:
     async def login(self, payload: LoginRequest) -> TokenResponse:
         document = await user_service.get_by_email(payload.email)
         if document is None or not verify_password(
-            payload.password, str(document.get("password_hash", ""))
+            payload.password, str(document.get(Field.PASSWORD_HASH, ""))
         ):
             raise UnauthorizedError(ErrorMessage.INVALID_CREDENTIALS)
 

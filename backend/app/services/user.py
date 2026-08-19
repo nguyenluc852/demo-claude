@@ -50,7 +50,7 @@ class UserService:
         document: dict[str, Any] = {
             Field.USERNAME: payload.username,
             Field.EMAIL: payload.email.lower(),
-            "password_hash": hash_password(payload.password),
+            Field.PASSWORD_HASH: hash_password(payload.password),
             Field.ROLE: role,
             "email_verified": True,
             "phone": None,
@@ -89,7 +89,7 @@ class UserService:
             {
                 Field.USERNAME: username,
                 Field.EMAIL: normalized,
-                "password_hash": hash_password(phone),
+                Field.PASSWORD_HASH: hash_password(phone),
                 Field.ROLE: UserRole.TENANT,
                 "email_verified": False,
                 Field.VERIFICATION_TOKEN: token,

@@ -28,6 +28,9 @@ Hai app nối với nhau bằng proxy, không phải CORS — xem rule `api-cont
   `schemas/`, với `common/` và `core/` giữ các phần dùng chung.
 - Frontend: atomic design, `components/atoms` → `molecules` → `organisms` →
   `templates` → `pages`, state là các slice Redux Toolkit trong `src/store/slices/`.
+  Animation của trang chủ nằm ở `src/hooks/` (`useInView` dựa trên IntersectionObserver,
+  `useCountUp`) cộng helper `stagger()` trong `src/utils/style.ts` — không phải thư viện
+  animation nào. jsdom không có IntersectionObserver nên `src/test/setup.ts` stub sẵn nó.
 
 ## Skills
 
@@ -74,6 +77,7 @@ trong lúc xây.
 | `domain-invariants` | Hành vi nghiệp vụ của hợp đồng, xác thực email, chỉ số, hóa đơn |
 | `design-system` | Một file CSS duy nhất, bảng màu cố định, `--font-mono` cho mọi con số |
 | `testing` | Helper dựng fixture và cách ly database của bộ test backend |
+| `secrets-from-env` | Secret đọc từ env, mặc định rỗng, fail closed, không in ra stdout |
 
 @.claude/rules/no-hardcoded-strings.md
 @.claude/rules/api-contract.md
@@ -85,6 +89,7 @@ trong lúc xây.
 @.claude/rules/domain-invariants.md
 @.claude/rules/design-system.md
 @.claude/rules/testing.md
+@.claude/rules/secrets-from-env.md
 
 ## Lệnh
 
@@ -110,7 +115,11 @@ nhầm interpreter.
 ```
 
 `scripts/seed.py` chạy lại được nhiều lần: nó tạo một admin, tám phòng, năm hợp đồng,
-ba kỳ đã xuất hóa đơn, và vài liên hệ. Chạy lại thì bù thêm dữ liệu còn thiếu.
+ba kỳ đã xuất hóa đơn, và vài liên hệ. Chạy lại thì bù thêm dữ liệu còn thiếu. Nhưng nó
+chỉ **tạo** operator, gặp tài khoản đã có thì bỏ qua — sửa tài khoản có sẵn thì dùng
+`scripts/set_admin_password.py` (đổi mật khẩu) hoặc `scripts/set_admin_email.py` (đổi
+email, tìm theo `SEED_ADMIN_USERNAME`). Cả ba đọc secret từ env; xem rule
+`secrets-from-env`.
 
 ### Frontend (từ thư mục `frontend/`)
 
@@ -132,6 +141,23 @@ frontend build thành static asset và phục vụ bởi nginx ở :80, nginx c�
 
 Cả hai Dockerfile đều multi-stage với target `dev` và `prod`; compose chọn target,
 nên đừng bao giờ thêm Dockerfile thứ ba.
+
+## Deploy
+
+Frontend trên **Vercel**, backend trên **Render**, database trên **MongoDB Atlas**.
+Quy trình đầy đủ nằm trong `DEPLOY.md` — đây chỉ là những gì ảnh hưởng tới lúc viết code:
+
+- `vercel.json` rewrite `/api/*` sang Render, `frontend/nginx.conf` làm điều đó trong
+  Docker, `vite.config.ts` làm lúc dev. **Cả ba đường đều là proxy**, nên frontend luôn
+  gọi đường dẫn tương đối và không bao giờ cần biết host của backend.
+- `render.yaml` là blueprint duy nhất. Thêm một biến môi trường mới cho backend thì
+  thêm vào cả `render.yaml` và `backend/.env.example`, nếu không bản deploy sẽ chạy với
+  giá trị rỗng mà không báo gì — `Settings` đặt `extra="ignore"`.
+- Gói free của Render ngủ sau 15 phút không có request. Đó là lý do có
+  `POST /invoices/dispatch` và `SCHEDULER_ENABLED` — xem mục dưới.
+
+Đừng dán connection string Atlas hay secret của Render vào file được commit; xem rule
+`secrets-from-env`.
 
 ## Email và lập lịch
 

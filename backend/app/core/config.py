@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     # the endpoint refuses everything — never that it is open.
     cron_secret: str = ""
 
+    # Seed operator, read from the environment so no credential is committed.
+    # Empty password means `scripts.seed` refuses to run — never that it falls
+    # back to a default one.
+    seed_admin_username: str = "admin"
+    seed_admin_email: str = "admin@smart.dev"
+    seed_admin_password: str = ""
+
     @property
     def smtp_enabled(self) -> bool:
         """Without a host the mailer logs instead of sending, so dev needs no server."""

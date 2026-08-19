@@ -104,6 +104,7 @@ class Field:
     ID: Final = "_id"
     EMAIL: Final = "email"
     USERNAME: Final = "username"
+    PASSWORD_HASH: Final = "password_hash"
     ROLE: Final = "role"
     ROOM_ID: Final = "room_id"
     ROOM_NUMBER: Final = "room_number"
