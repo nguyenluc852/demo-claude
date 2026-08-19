@@ -22,12 +22,17 @@ on:
           - set-admin-password
           - set-admin-email
           - reset-invoice-draft
+          - set-contract-email
       period:
         description: "reset-invoice-draft: kỳ hoá đơn YYYY-MM (bắt buộc)"
         required: false
         type: string
       room:
-        description: "reset-invoice-draft: số phòng. Bỏ trống = cả kỳ, mỗi hoá đơn một email"
+        description: "reset-invoice-draft / set-contract-email: số phòng"
+        required: false
+        type: string
+      email:
+        description: "set-contract-email: email khách thuê mới"
         required: false
         type: string
 
@@ -51,6 +56,8 @@ jobs:
       SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
       RESET_PERIOD: ${{ inputs.period }}
       RESET_ROOM: ${{ inputs.room }}
+      CONTRACT_ROOM: ${{ inputs.room }}
+      CONTRACT_EMAIL: ${{ inputs.email }}
       # Script nào lỡ khởi tạo mailer cũng chỉ ghi log, không gửi thật.
       RESEND_API_KEY: ""
 
@@ -90,3 +97,10 @@ jobs:
       - name: Reset invoices to draft
         if: inputs.action == 'reset-invoice-draft'
         run: python -m scripts.reset_invoice_draft
+
+      # Đổi email khách thuê của hợp đồng đang hiệu lực. Đi qua
+      # contract_service.update() nên vẫn reset trạng thái xác thực như khi sửa
+      # trong CMS — link xác minh chỉ được ghi log vì RESEND_API_KEY để trống ở đây.
+      - name: Set contract email
+        if: inputs.action == 'set-contract-email'
+        run: python -m scripts.set_contract_email
