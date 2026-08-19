@@ -79,9 +79,9 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     environment: production
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    # Ba biến này cố ý KHÔNG khai báo ở cấp job: bước "Check secrets" cắt khoảng
+    # trắng rồi ghi vào $GITHUB_ENV, và một khai báo ở cấp job hay cấp step sẽ
+    # che mất bản đã cắt đó.
     steps:
       - uses: actions/checkout@v4
 
@@ -97,6 +97,8 @@ jobs:
       - name: Check secrets
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
           missing=""
           if [ -z "$VERCEL_TOKEN" ]; then missing="$missing VERCEL_TOKEN"; fi
@@ -107,19 +109,26 @@ jobs:
             exit 1
           fi
 
+          # Paste một secret kèm xuống dòng là lỗi vô hình: CLI gửi id sai một
+          # ký tự rồi báo "Could not retrieve Project Settings", nghe như sai
+          # quyền. Cắt sạch khoảng trắng rồi mới dùng.
+          {
+            printf 'VERCEL_TOKEN=%s\n' "$(printf %s "$VERCEL_TOKEN" | tr -d '[:space:]')"
+            printf 'VERCEL_ORG_ID=%s\n' "$(printf %s "$VERCEL_ORG_ID" | tr -d '[:space:]')"
+            printf 'VERCEL_PROJECT_ID=%s\n' "$(printf %s "$VERCEL_PROJECT_ID" | tr -d '[:space:]')"
+          } >> "$GITHUB_ENV"
+
+          # Chỉ in độ dài, không in giá trị. org id đúng dài 29, project id 32;
+          # lệch nghĩa là secret dính ký tự thừa.
+          echo "độ dài: org=${#VERCEL_ORG_ID} project=${#VERCEL_PROJECT_ID}"
+
       # `vercel build` đọc vercel.json ở gốc repo — cùng buildCommand và
       # rewrites như khi deploy tay, nên không có đường build thứ hai.
       - name: Pull project settings
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Build
         run: vercel build --prod --token="$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
         run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
