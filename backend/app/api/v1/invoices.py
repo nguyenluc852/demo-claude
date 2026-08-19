@@ -45,7 +45,7 @@ async def dispatch_invoices(_: CronDep) -> DataResponse[InvoiceDispatchResult]:
     Safe to call twice: sending moves an invoice out of draft, so a second run
     finds nothing left to send.
     """
-    return DataResponse(data=InvoiceDispatchResult(sent=await invoice_service.send_pending()))
+    return DataResponse(data=await invoice_service.send_pending())
 
 
 @router.post(Route.INVOICE_SEND, response_model=DataResponse[InvoiceSchema])

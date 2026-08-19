@@ -29,7 +29,7 @@ from app.core.constants import (
 )
 from app.core.messages import EmailTemplate, ErrorMessage
 from app.db.mongo import get_collection
-from app.schemas.invoice import InvoiceLine, InvoiceSchema
+from app.schemas.invoice import InvoiceDispatchResult, InvoiceLine, InvoiceSchema
 from app.services.email import render_invoice_email, send_email
 from app.services.service_setting import service_setting_service
 
@@ -243,25 +243,33 @@ class InvoiceService:
         )
         return await self.get(invoice_id)
 
-    async def send_pending(self) -> int:
-        """Dispatch every draft invoice. Driven by the monthly scheduler."""
+    async def send_pending(self) -> InvoiceDispatchResult:
+        """Dispatch every draft invoice. Driven by the monthly scheduler.
+
+        Counts both outcomes: a run that fails every send reports failed > 0
+        rather than passing for an empty run.
+        """
         cursor = self._collection.find({Field.STATUS: InvoiceStatus.DRAFT})
         ids = [str(doc[Field.ID]) async for doc in cursor]
         sent = 0
+        failed = 0
         for invoice_id in ids:
             try:
                 await self.send(invoice_id)
             except BadRequestError:
                 # A contract with no address cannot be mailed; the rest still go.
+                logger.warning("Invoice %s has no tenant email; left as draft.", invoice_id)
+                failed += 1
                 continue
             except EmailDeliveryError:
                 # One rejected address must not abort the batch, and the monthly
                 # cron must not go red over it — send() leaves the invoice in
                 # DRAFT, so the next run picks it up again.
                 logger.warning("Invoice %s could not be mailed; left as draft.", invoice_id)
+                failed += 1
                 continue
             sent += 1
-        return sent
+        return InvoiceDispatchResult(sent=sent, failed=failed)
 
 
 invoice_service = InvoiceService()

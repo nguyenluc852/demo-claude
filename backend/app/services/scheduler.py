@@ -19,8 +19,12 @@ _scheduler: AsyncIOScheduler | None = None
 
 
 async def dispatch_pending_invoices() -> None:
-    sent = await invoice_service.send_pending()
-    logger.info("Monthly invoice dispatch sent %s invoice(s)", sent)
+    result = await invoice_service.send_pending()
+    logger.info(
+        "Monthly invoice dispatch sent %s invoice(s), %s failed",
+        result.sent,
+        result.failed,
+    )
 
 
 def start() -> None:

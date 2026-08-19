@@ -46,9 +46,14 @@ class InvoicePayment(BaseModel):
 
 
 class InvoiceDispatchResult(BaseModel):
-    """How many draft invoices one dispatch run actually mailed."""
+    """What one dispatch run did.
+
+    `failed` exists so a run where every send was refused cannot look like a run
+    with nothing to do — both would otherwise report sent=0 and a green cron.
+    """
 
     sent: int
+    failed: int = 0
 
 
 class InvoiceStatusUpdate(BaseModel):
