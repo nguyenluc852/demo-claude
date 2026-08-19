@@ -10,9 +10,9 @@ from email.message import EmailMessage
 import aiosmtplib
 
 from app.core.config import settings
-from app.core.constants import ServiceCode
+from app.core.constants import ServiceCode, Smtp
 from app.core.messages import EmailTemplate
-from app.schemas.invoice import InvoiceSchema
+from app.schemas.invoice import InvoiceLine, InvoiceSchema
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,8 @@ _STYLE_TH = (
     "border-bottom:2px solid #e2e8f0;font-weight:600;"
 )
 _STYLE_TD = "padding:10px 12px;border-bottom:1px solid #e2e8f0;"
-_STYLE_TD_NUM = _STYLE_TD + "text-align:right;font-variant-numeric:tabular-nums;"
+_STYLE_TD_NUM = _STYLE_TD + "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;"
+_STYLE_WORK = "color:#64748b;font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums;"
 _STYLE_TOTAL = (
     "margin:20px 0;padding:18px 20px;border-radius:12px;background:#ecfeff;"
     "border:1px solid #a5f3fc;"
@@ -79,13 +80,17 @@ async def send_email(to: str, subject: str, html_body: str) -> None:
     message["Subject"] = subject
     message.set_content(html_body, subtype="html")
 
+    # Port 465 is TLS from the first byte; anything else negotiates STARTTLS.
+    # Offering STARTTLS on 465 never gets a reply, so the send hangs then fails.
+    implicit_tls = settings.smtp_port == Smtp.IMPLICIT_TLS_PORT
     await aiosmtplib.send(
         message,
         hostname=settings.smtp_host,
         port=settings.smtp_port,
         username=settings.smtp_user or None,
         password=settings.smtp_password or None,
-        start_tls=settings.smtp_use_tls,
+        use_tls=settings.smtp_use_tls and implicit_tls,
+        start_tls=settings.smtp_use_tls and not implicit_tls,
     )
 
 
@@ -111,43 +116,52 @@ def render_verification_email(verify_url: str) -> str:
         f'<p style="color:#475569;font-size:14px;">'
         f"{EmailTemplate.VERIFY_CREDENTIALS_NOTE}</p>"
     )
-    return _shell(EmailTemplate.VERIFY_HEADING, verify_url, body)
+    # The subtitle is display copy, never the URL: the link belongs to the
+    # button alone, so the token does not sit in the open on screen.
+    return _shell(
+        EmailTemplate.VERIFY_HEADING, EmailTemplate.VERIFY_SUBTITLE, body
+    )
+
+
+def _work(line: InvoiceLine) -> str:
+    """The arithmetic behind one line, in words."""
+    is_metered = line.code in (ServiceCode.ELECTRICITY, ServiceCode.WATER)
+    if is_metered:
+        return EmailTemplate.WORK_METERED.format(
+            old=_number(line.meter_old),
+            new=_number(line.meter_new),
+            usage=_number(line.quantity),
+            unit=line.unit,
+            price=_money(line.unit_price),
+        )
+    return EmailTemplate.WORK_FIXED.format(
+        quantity=_number(line.quantity), price=_money(line.unit_price)
+    )
+
+
+def _row(name: str, work: str, amount: float) -> str:
+    """Two columns, never six: a phone cannot scroll an email sideways, so the
+    readings and the unit price fold under the name instead of beside it."""
+    return (
+        f'<tr><td style="{_STYLE_TD}">'
+        f'<div style="font-weight:600;">{name}</div>'
+        f'<div style="{_STYLE_WORK}">{work}</div></td>'
+        f'<td style="{_STYLE_TD_NUM}"><b>{_money(amount)}</b></td></tr>'
+    )
 
 
 def _meter_rows(invoice: InvoiceSchema) -> str:
-    """Metered lines show old/new readings; fixed fees show a plain quantity."""
-    rows: list[str] = [
-        f'<tr><td style="{_STYLE_TD}">{EmailTemplate.ROW_RENT}</td>'
-        f'<td style="{_STYLE_TD_NUM}">—</td>'
-        f'<td style="{_STYLE_TD_NUM}">—</td>'
-        f'<td style="{_STYLE_TD_NUM}">1</td>'
-        f'<td style="{_STYLE_TD_NUM}">{_money(invoice.room_charge)}</td>'
-        f'<td style="{_STYLE_TD_NUM}"><b>{_money(invoice.room_charge)}</b></td></tr>'
+    rows = [
+        _row(EmailTemplate.ROW_RENT, EmailTemplate.WORK_RENT, invoice.room_charge)
     ]
-    for line in invoice.lines:
-        is_metered = line.code in (ServiceCode.ELECTRICITY, ServiceCode.WATER)
-        rows.append(
-            f'<tr><td style="{_STYLE_TD}">{line.name}</td>'
-            f'<td style="{_STYLE_TD_NUM}">{_number(line.meter_old) if is_metered else "—"}</td>'
-            f'<td style="{_STYLE_TD_NUM}">{_number(line.meter_new) if is_metered else "—"}</td>'
-            f'<td style="{_STYLE_TD_NUM}">{_number(line.quantity)}</td>'
-            f'<td style="{_STYLE_TD_NUM}">{_money(line.unit_price)}</td>'
-            f'<td style="{_STYLE_TD_NUM}"><b>{_money(line.amount)}</b></td></tr>'
-        )
+    rows.extend(_row(line.name, _work(line), line.amount) for line in invoice.lines)
     return "".join(rows)
 
 
 def render_invoice_email(invoice: InvoiceSchema) -> str:
     headers = "".join(
         f'<th style="{_STYLE_TH}">{label}</th>'
-        for label in (
-            EmailTemplate.COL_DESCRIPTION,
-            EmailTemplate.COL_OLD,
-            EmailTemplate.COL_NEW,
-            EmailTemplate.COL_USAGE,
-            EmailTemplate.COL_UNIT_PRICE,
-            EmailTemplate.COL_AMOUNT,
-        )
+        for label in (EmailTemplate.COL_DESCRIPTION, EmailTemplate.COL_AMOUNT)
     )
     room_number = invoice.room_number or ""
     bank = "<br>".join(

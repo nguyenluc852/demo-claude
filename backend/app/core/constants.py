@@ -249,6 +249,16 @@ class Business:
     PERIOD_FORMAT: Final = "%Y-%m"
 
 
+class Smtp:
+    """Which TLS handshake a port implies.
+
+    465 speaks TLS from the first byte (SMTPS); 587 starts in the clear and
+    upgrades with STARTTLS. Sending the wrong one hangs until the peer drops.
+    """
+
+    IMPLICIT_TLS_PORT: Final = 465
+
+
 class Header:
     REQUEST_ID: Final = "X-Request-ID"
     AUTHORIZATION: Final = "Authorization"

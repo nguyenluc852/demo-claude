@@ -89,6 +89,7 @@ class EmailTemplate:
     VERIFY_SUBJECT: Final = "[Nhà trọ] Xác minh địa chỉ email của bạn"
 
     VERIFY_HEADING: Final = "Xác minh địa chỉ email"
+    VERIFY_SUBTITLE: Final = "Một bước cuối trước khi bạn đăng nhập"
     VERIFY_INTRO: Final = (
         "Tài khoản khách thuê của bạn đã được khởi tạo. "
         "Vui lòng bấm nút bên dưới để xác minh email và đăng nhập hệ thống."
@@ -111,11 +112,18 @@ class EmailTemplate:
     )
 
     COL_DESCRIPTION: Final = "Khoản mục"
+    COL_AMOUNT: Final = "Thành tiền"
+    # The PDF prints on A4 and has the width for a full six-column breakdown;
+    # the email does not, so only these four are print-only.
     COL_OLD: Final = "Chỉ số cũ"
     COL_NEW: Final = "Chỉ số mới"
     COL_USAGE: Final = "Tiêu thụ"
     COL_UNIT_PRICE: Final = "Đơn giá"
-    COL_AMOUNT: Final = "Thành tiền"
+    # The arithmetic behind a line, folded under its name so the table stays two
+    # columns wide — a phone cannot scroll an email sideways.
+    WORK_METERED: Final = "{old} → {new} · {usage} {unit} × {price}"
+    WORK_FIXED: Final = "{quantity} × {price}"
+    WORK_RENT: Final = "Giá thuê cố định theo hợp đồng"
 
     ROW_RENT: Final = "Tiền phòng"
     ROW_ELECTRICITY: Final = "Tiền điện"
