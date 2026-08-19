@@ -39,6 +39,17 @@ jobs:
             echo "Thiếu secret RENDER_DEPLOY_HOOK_URL" >&2
             exit 1
           fi
+          # Không có scheme thì curl coi cả giá trị là hostname và chỉ báo
+          # "could not resolve host: ***" — dấu hiệu ai đó dán thiếu phần đầu
+          # URL. So khớp bằng case nên không có giá trị nào bị in ra.
+          case "$HOOK" in
+            https://api.render.com/deploy/*) ;;
+            *)
+              echo "RENDER_DEPLOY_HOOK_URL phải là URL đầy đủ, dạng" >&2
+              echo "https://api.render.com/deploy/srv-xxxx?key=yyyy" >&2
+              exit 1
+              ;;
+          esac
           curl --fail --silent --show-error --output /dev/null "$HOOK"
           echo "Đã gửi yêu cầu deploy sang Render."
 
