@@ -141,6 +141,7 @@ export const FAQ_ANCHOR = 'faq' as const
  */
 export const HOME_MEDIA = {
   building: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&q=80',
+  hero: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1400&q=80',
 } as const
 
 /** How long the stat counters take to run up to their real value. */

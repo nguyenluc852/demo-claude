@@ -4,7 +4,7 @@ import {
   AmenitiesSection,
   ContactForm,
   FaqSection,
-  LedgerHero,
+  HomeHero,
   ProcessSection,
   PropertyBand,
   RoomShowcase,
@@ -20,7 +20,7 @@ export function HomePage() {
 
   return (
     <SiteLayout header={<SiteHeader />} footer={<SiteFooter />}>
-      <LedgerHero />
+      <HomeHero />
       <PropertyBand />
       <AmenitiesSection />
       <RoomShowcase onBookRoom={setBookingRoom} />
