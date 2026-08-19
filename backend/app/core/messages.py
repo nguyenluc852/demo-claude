@@ -33,6 +33,7 @@ class ErrorMessage:
     INVALID_VERIFICATION_TOKEN: Final = "Liên kết xác minh không hợp lệ hoặc đã được dùng"
     USER_NOT_FOUND: Final = "Không tìm thấy tài khoản"
     CANNOT_DELETE_SELF: Final = "Không thể xóa tài khoản đang đăng nhập"
+    INVALID_CRON_SECRET: Final = "Khóa lập lịch không hợp lệ"
 
     # Rooms
     ROOM_NOT_FOUND: Final = "Không tìm thấy phòng"

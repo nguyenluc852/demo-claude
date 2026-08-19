@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Query, Response
 
-from app.common.deps import PaginationDep, StaffDep
+from app.common.deps import CronDep, PaginationDep, StaffDep
 from app.common.schemas import DataResponse, PageMeta, PageResponse
 from app.core.constants import Header, MediaType, QueryParam, Route, Tag
-from app.schemas.invoice import InvoicePayment, InvoiceSchema, InvoiceStatusUpdate
+from app.schemas.invoice import (
+    InvoiceDispatchResult,
+    InvoicePayment,
+    InvoiceSchema,
+    InvoiceStatusUpdate,
+)
 from app.services.invoice import invoice_service
 from app.services.pdf import invoice_filename, render_invoice_pdf
 
@@ -29,6 +34,18 @@ async def list_invoices(
 @router.get(Route.INVOICE_DETAIL, response_model=DataResponse[InvoiceSchema])
 async def get_invoice(invoice_id: str, _: StaffDep) -> DataResponse[InvoiceSchema]:
     return DataResponse(data=await invoice_service.get(invoice_id))
+
+
+@router.post(Route.INVOICE_DISPATCH, response_model=DataResponse[InvoiceDispatchResult])
+async def dispatch_invoices(_: CronDep) -> DataResponse[InvoiceDispatchResult]:
+    """Mail every draft invoice. The monthly job, reachable over HTTP.
+
+    Same call the in-process scheduler makes, so an external cron can drive the
+    monthly run where the process does not stay alive long enough to hold one.
+    Safe to call twice: sending moves an invoice out of draft, so a second run
+    finds nothing left to send.
+    """
+    return DataResponse(data=InvoiceDispatchResult(sent=await invoice_service.send_pending()))
 
 
 @router.post(Route.INVOICE_SEND, response_model=DataResponse[InvoiceSchema])

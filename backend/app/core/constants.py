@@ -47,6 +47,7 @@ class Route:
     INVOICE_SEND: Final = "/invoices/{invoice_id}/send"
     INVOICE_PAYMENT: Final = "/invoices/{invoice_id}/payment"
     INVOICE_PDF: Final = "/invoices/{invoice_id}/pdf"
+    INVOICE_DISPATCH: Final = "/invoices/dispatch"
 
     # Master data — service prices
     SERVICES: Final = "/services"
@@ -251,6 +252,7 @@ class Business:
 class Header:
     REQUEST_ID: Final = "X-Request-ID"
     AUTHORIZATION: Final = "Authorization"
+    CRON_SECRET: Final = "X-Cron-Secret"
     CONTENT_DISPOSITION: Final = "Content-Disposition"
     ATTACHMENT_TEMPLATE: Final = 'attachment; filename="{name}"' 
 

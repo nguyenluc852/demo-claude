@@ -23,7 +23,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Own the Mongo connection and the monthly mailer for the process lifetime."""
     await mongo.connect()
     await service_setting_service.ensure_defaults()
-    scheduler.start()
+    # Off where the process sleeps between requests; the dispatch endpoint in
+    # api/v1/invoices.py then carries the monthly run instead.
+    if settings.scheduler_enabled:
+        scheduler.start()
     try:
         yield
     finally:

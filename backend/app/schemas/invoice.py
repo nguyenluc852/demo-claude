@@ -45,6 +45,12 @@ class InvoicePayment(BaseModel):
     paid_amount: float = Field(ge=0, le=Limits.MONEY_MAX)
 
 
+class InvoiceDispatchResult(BaseModel):
+    """How many draft invoices one dispatch run actually mailed."""
+
+    sent: int
+
+
 class InvoiceStatusUpdate(BaseModel):
     status: str
 

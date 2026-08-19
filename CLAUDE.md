@@ -70,7 +70,7 @@ trong lúc xây.
 | `mongodb-access` | Gọi `get_collection()` lúc chạy, dùng hằng `Collection`/`Field` |
 | `frontend-architecture` | Các tầng atomic, ai được chạm vào Redux, routing, ràng buộc TS |
 | `async-ui-state` | Chống double-click trên mọi control có gửi request |
-| `auth-and-roles` | `UserRole` và bốn dependency phân quyền route |
+| `auth-and-roles` | `UserRole`, bốn dependency phân quyền route, và `CronDep` cho scheduler |
 | `domain-invariants` | Hành vi nghiệp vụ của hợp đồng, xác thực email, chỉ số, hóa đơn |
 | `design-system` | Một file CSS duy nhất, bảng màu cố định, `--font-mono` cho mọi con số |
 | `testing` | Helper dựng fixture và cách ly database của bộ test backend |
@@ -140,3 +140,9 @@ ghi log nội dung thay vì gửi thật**, nên không cần mail server để 
 có gửi email. `services/scheduler.py` chạy một cron job APScheduler duy nhất, gửi hóa
 đơn nháp hằng tháng; lifespan khởi động và dừng nó để một lần reload không làm chạy
 song song hai scheduler trên cùng một database.
+
+Scheduler chỉ chạy khi process còn sống, nên bản deploy trên gói free ngủ giữa các
+request sẽ không bao giờ nổ job. Vì vậy có đường thứ hai: `POST /invoices/dispatch`
+gọi đúng cùng một `invoice_service.send_pending()`, bảo vệ bằng `CronDep`, để một cron
+bên ngoài kích hoạt. Đặt `SCHEDULER_ENABLED=false` ở những nơi dùng đường này. Gọi lặp
+là vô hại — xem rule `auth-and-roles`.

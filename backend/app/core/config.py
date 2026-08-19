@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     invoice_cron_day: int = 5
     invoice_cron_hour: int = 8
 
+    # Turn off where the process does not stay alive between requests (a free
+    # tier that sleeps); the dispatch endpoint then carries the monthly run.
+    scheduler_enabled: bool = True
+
+    # Shared secret for the machine-to-machine dispatch endpoint. Empty means
+    # the endpoint refuses everything — never that it is open.
+    cron_secret: str = ""
+
     @property
     def smtp_enabled(self) -> bool:
         """Without a host the mailer logs instead of sending, so dev needs no server."""

@@ -1,5 +1,6 @@
 """Dependencies shared across routers: pagination and the authenticated caller."""
 
+import secrets
 from typing import Annotated, Any
 
 from fastapi import Depends, Header, Query
@@ -8,7 +9,17 @@ from app.common.documents import serialize, to_object_id
 from app.common.exceptions import ForbiddenError, UnauthorizedError
 from app.common.schemas import PaginationParams
 from app.common.security import decode_access_token
-from app.core.constants import AuthScheme, Collection, Field, Pagination, UserRole
+from app.core.config import settings
+from app.core.constants import (
+    AuthScheme,
+    Collection,
+    Field,
+    Pagination,
+    UserRole,
+)
+from app.core.constants import (
+    Header as HeaderName,
+)
 from app.core.messages import ErrorMessage
 from app.db.mongo import get_collection
 from app.schemas.user import UserSchema
@@ -86,3 +97,25 @@ async def require_tenant(user: CurrentUserDep) -> UserSchema:
 
 
 TenantDep = Annotated[UserSchema, Depends(require_tenant)]
+
+
+async def require_cron_secret(
+    cron_secret: Annotated[str | None, Header(alias=HeaderName.CRON_SECRET)] = None,
+) -> None:
+    """Guard the machine-to-machine dispatch endpoint.
+
+    Not a `UserRole`: the caller is an external scheduler, not a person, so it
+    gets its own narrow credential rather than a staff account's token.
+
+    Fails closed. An unset `CRON_SECRET` rejects every request, so forgetting
+    the environment variable can never leave the endpoint standing open.
+    """
+    if not settings.cron_secret:
+        raise ForbiddenError(ErrorMessage.INVALID_CRON_SECRET)
+    if cron_secret is None or not secrets.compare_digest(
+        cron_secret, settings.cron_secret
+    ):
+        raise ForbiddenError(ErrorMessage.INVALID_CRON_SECRET)
+
+
+CronDep = Annotated[None, Depends(require_cron_secret)]
