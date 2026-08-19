@@ -1,0 +1,60 @@
+# Backend blueprint for Render.
+#
+# Vercel hosts the frontend and rewrites /api/* here (see vercel.json), so the
+# browser still sees a single origin — the same arrangement the Vite proxy and
+# nginx.conf give in dev and in Docker.
+#
+# Render is used rather than a serverless platform because app/main.py starts
+# APScheduler inside the FastAPI lifespan: the monthly draft-invoice mailer
+# needs a process that stays alive between requests.
+#
+# The Dockerfile's last stage is `prod`, which is what an untargeted build
+# produces — unprivileged user, app/ only, no dev dependencies.
+
+services:
+  - type: web
+    name: ancu-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    # The image's CMD pins port 8000; Render routes to $PORT instead.
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    region: singapore
+    plan: free
+    envVars:
+      # Paste the MongoDB Atlas connection string in the Render dashboard.
+      # mongodb+srv:// works because dnspython arrives with email-validator.
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB
+        value: motel
+
+      # Generated once by Render and kept; rotating it signs everyone out.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Where verification links in tenant emails point — the Vercel URL,
+      # not this API's. Set after the frontend is deployed.
+      - key: PUBLIC_BASE_URL
+        sync: false
+
+      # Pydantic parses list fields as JSON, so this must be a JSON array:
+      #   ["https://your-app.vercel.app"]
+      # Only needed if something reaches the API cross-origin; the Vercel
+      # rewrite itself is server-side and involves no preflight.
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Leave SMTP_HOST unset and services/email.py logs the message instead of
+      # sending it — the app runs fine without a mail server.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
