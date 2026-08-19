@@ -1,0 +1,99 @@
+name: Deploy
+
+# Push vào main là deploy — nhưng chỉ sau khi ci.yml xanh (job `check` bên dưới
+# gọi lại đúng workflow đó, không copy lệnh).
+#
+# Mọi credential đến từ GitHub Secrets của environment `production`; không có
+# giá trị nào nằm trong file này, và không lệnh nào in secret ra log.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".claude/**"
+  workflow_dispatch:
+
+# Hai lần push liền nhau không được deploy chồng lên nhau, nhưng cũng không huỷ
+# một bản deploy đang chạy dở.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  check:
+    uses: ./.github/workflows/ci.yml
+
+  backend:
+    name: Backend → Render
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      # Deploy hook là một URL bí mật; Render tự build từ render.yaml, nên ở đây
+      # không cần Atlas connection string hay bất cứ biến runtime nào.
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "Thiếu secret RENDER_DEPLOY_HOOK_URL" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --output /dev/null "$HOOK"
+          echo "Đã gửi yêu cầu deploy sang Render."
+
+      # Render build mất vài phút; poll /api/v1/health để job chỉ xanh khi bản
+      # mới thực sự phục vụ được. RENDER_HEALTH_URL là URL công khai, để ở
+      # Variables cũng được.
+      - name: Wait for health check
+        env:
+          HEALTH: ${{ vars.RENDER_HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH" ]; then
+            echo "Bỏ qua: chưa đặt biến RENDER_HEALTH_URL."
+            exit 0
+          fi
+          for i in $(seq 1 40); do
+            if curl --fail --silent --max-time 20 "$HEALTH" | grep -q '"status":"ok"'; then
+              echo "Backend đã lên sau $i lần thử."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Backend không trả health trong 10 phút." >&2
+          exit 1
+
+  frontend:
+    name: Frontend → Vercel
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # `vercel build` đọc vercel.json ở gốc repo — cùng buildCommand và
+      # rewrites như khi deploy tay, nên không có đường build thứ hai.
+      - name: Pull project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

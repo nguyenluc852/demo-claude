@@ -1,0 +1,103 @@
+name: CI
+
+# Chạy cho mọi push và mọi pull request, và cũng được deploy.yml gọi lại như một
+# reusable workflow — nhờ vậy chỉ có MỘT định nghĩa cho bộ kiểm tra, và bản deploy
+# không bao giờ chạy trên code chưa qua lint/typecheck/test.
+on:
+  push:
+    # `main` đã được deploy.yml chạy qua cùng bộ kiểm tra này; bỏ ra để một lần
+    # push không nổ hai lần cùng một job.
+    branches-ignore: [main]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (ruff + mypy + pytest)
+    runs-on: ubuntu-latest
+
+    # Bộ test nói chuyện với Mongo thật; conftest.py tự trỏ sang database
+    # <db>_test nên container này bị xoá sạch cùng lúc với job.
+    services:
+      mongo:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: motel
+          MONGO_INITDB_ROOT_PASSWORD: motel
+          MONGO_INITDB_DATABASE: motel
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval \"db.adminCommand('ping').ok\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # Cùng credential với docker-compose.yml: đây là container dùng một lần
+      # trong runner, không phải secret. Secret thật đi qua GitHub Secrets,
+      # xem deploy.yml.
+      MONGODB_URL: mongodb://motel:motel@localhost:27017/motel?authSource=admin
+      MONGODB_DB: motel
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Typecheck
+        run: mypy app tests scripts
+
+      - name: Test
+        run: pytest -q
+
+  frontend:
+    name: Frontend (oxlint + tsc + vitest)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      # Build ở đây bắt lỗi biên dịch sớm; bản deploy thật vẫn do Vercel build.
+      - name: Build
+        run: npm run build
