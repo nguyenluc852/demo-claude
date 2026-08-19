@@ -17,7 +17,7 @@ Bốn workflow trong `.github/workflows/`:
 |---|---|---|
 | `ci.yml` | mọi push, mọi PR | ruff + mypy + pytest (kèm service Mongo 7), oxlint + tsc + vitest + build |
 | `deploy.yml` | push vào `main`, hoặc bấm tay | gọi lại `ci.yml`, xanh mới deploy backend lên Render và frontend lên Vercel |
-| `admin-ops.yml` | chỉ bấm tay | chạy `seed`, `set_admin_password`, `set_admin_email` trên database production |
+| `admin-ops.yml` | chỉ bấm tay | chạy `seed`, `set_admin_password`, `set_admin_email`, `reset_invoice_draft` trên database production |
 | `invoice-dispatch.yml` | 01:00 UTC ngày 5 hằng tháng, hoặc bấm tay | `POST /api/v1/invoices/dispatch` — job gửi hoá đơn nháp |
 
 `deploy.yml` gọi `ci.yml` như reusable workflow, nên bộ kiểm tra chỉ có một định

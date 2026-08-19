@@ -21,6 +21,15 @@ on:
           - seed
           - set-admin-password
           - set-admin-email
+          - reset-invoice-draft
+      period:
+        description: "reset-invoice-draft: kỳ hoá đơn YYYY-MM (bắt buộc)"
+        required: false
+        type: string
+      room:
+        description: "reset-invoice-draft: số phòng. Bỏ trống = cả kỳ, mỗi hoá đơn một email"
+        required: false
+        type: string
 
 jobs:
   run:
@@ -40,6 +49,8 @@ jobs:
       SEED_ADMIN_USERNAME: ${{ vars.SEED_ADMIN_USERNAME || 'admin' }}
       SEED_ADMIN_EMAIL: ${{ vars.SEED_ADMIN_EMAIL }}
       SEED_ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+      RESET_PERIOD: ${{ inputs.period }}
+      RESET_ROOM: ${{ inputs.room }}
       # Script nào lỡ khởi tạo mailer cũng chỉ ghi log, không gửi thật.
       RESEND_API_KEY: ""
 
@@ -73,3 +84,9 @@ jobs:
       - name: Set admin email
         if: inputs.action == 'set-admin-email'
         run: python -m scripts.set_admin_email
+
+      # Đưa hoá đơn đã phát hành về nháp để lần dispatch sau gửi lại. Hoá đơn đã
+      # trả một phần hoặc đã trả đủ thì bị bỏ qua, không mất trạng thái thanh toán.
+      - name: Reset invoices to draft
+        if: inputs.action == 'reset-invoice-draft'
+        run: python -m scripts.reset_invoice_draft
