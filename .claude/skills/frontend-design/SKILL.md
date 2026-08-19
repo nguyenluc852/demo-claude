@@ -1,55 +1,55 @@
 ---
 name: frontend-design
-description: Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.
-license: Complete terms in LICENSE.txt
+description: Hướng dẫn thiết kế hình ảnh có chủ đích và có cá tính khi xây UI mới hoặc làm lại UI cũ. Hỗ trợ về định hướng thẩm mỹ, typography, và cách ra quyết định không bị đọc thành mẫu có sẵn (visual design, aesthetic direction, typography, layout, new screens).
+license: Điều khoản đầy đủ trong LICENSE.txt
 ---
 
-# Frontend Design
+# Thiết kế frontend
 
-Approach this as the design lead at a small studio known for giving every client a visual identity that could not be mistaken for anyone else's. This client has already rejected proposals that felt templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take one real aesthetic risk you can justify.
+Hãy tiếp cận việc này với tư cách design lead của một studio nhỏ nổi tiếng vì luôn cho mỗi khách hàng một bản sắc thị giác không thể nhầm với bất kỳ ai khác. Khách hàng này đã từ chối những đề xuất mang cảm giác rập khuôn, và họ đang trả tiền cho một quan điểm riêng: hãy ra những lựa chọn có chủ đích và có lập trường về bảng màu, typography, và bố cục, riêng cho đề bài này, và chấp nhận một rủi ro thẩm mỹ thật sự mà bạn có thể biện minh được.
 
-## Ground it in the subject
+## Bám vào chủ thể
 
-If the brief does not pin down what the product or subject is, pin it yourself before designing: name one concrete subject, its audience, and the page's single job, and state your choice. If there's any information in your memory about the human's preferences, context about what they're building, or designs you've made before – use that as a hint. The subject's own world, its materials, instruments, artifacts, and vernacular, is where distinctive choices come from. Build with the brief's real content and subject matter throughout.
+Nếu đề bài chưa chốt sản phẩm hoặc chủ thể là gì, hãy tự chốt trước khi thiết kế: nêu tên một chủ thể cụ thể, đối tượng người dùng của nó, và nhiệm vụ duy nhất của trang, rồi nói rõ lựa chọn của bạn. Nếu trong bộ nhớ của bạn có thông tin về sở thích của người dùng, bối cảnh thứ họ đang xây, hoặc các thiết kế bạn từng làm — hãy dùng đó làm gợi ý. Thế giới của chính chủ thể đó — vật liệu, dụng cụ, hiện vật, và ngôn ngữ riêng của nghề — là nơi những lựa chọn có cá tính bắt nguồn. Hãy xây bằng nội dung và chủ đề thật của đề bài xuyên suốt.
 
-## Design principles
+## Nguyên tắc thiết kế
 
-For web designs, the hero is a thesis. Open with the most characteristic thing in the subject's world, in whatever form makes sense for it: a headline, an image, an animation, a live demo, an interactive moment. Be deliberate with your choice: a big number with a small label, supporting stats, and a gradient accent is the template answer, only use if that's truly the best option.
+Với thiết kế web, phần hero là một luận đề. Hãy mở đầu bằng thứ đặc trưng nhất trong thế giới của chủ thể, dưới bất kỳ hình thức nào hợp lý với nó: một dòng tiêu đề, một hình ảnh, một animation, một demo chạy thật, một khoảnh khắc tương tác. Hãy chủ đích với lựa chọn đó: một con số lớn kèm nhãn nhỏ, vài chỉ số phụ trợ, và một dải gradient nhấn — đó là câu trả lời mẫu, chỉ dùng nếu nó thật sự là phương án tốt nhất.
 
-Typography carries the personality of the page. Pair the display and body faces deliberately, not the same families you would reach for on any other project, and set a clear type scale with intentional weights, widths, and spacing. Make the type treatment itself a memorable part of the design, not a neutral delivery vehicle for the content.
+Typography mang cá tính của trang. Hãy ghép font tiêu đề và font nội dung một cách có chủ đích, đừng dùng lại đúng những họ font bạn sẽ với tay lấy cho bất kỳ dự án nào khác, và đặt một thang chữ rõ ràng với độ đậm, độ rộng, và giãn cách có chủ ý. Hãy làm cho chính cách xử lý chữ trở thành một phần đáng nhớ của thiết kế, không phải một phương tiện trung tính để chuyển tải nội dung.
 
-Structure is information. Structural devices, numbering, eyebrows, dividers, labels, should encode something true about the content, not decorate it. Many generic designs use numbered markers (01 / 02 / 03), but that's only appropriate if the content actually is a sequence - like a real process or a typed timeline where order carries information the reader needs. Question if choices like numbered markers actually make sense before incorporating them.
+Cấu trúc chính là thông tin. Các thiết bị cấu trúc — đánh số, eyebrow, đường phân cách, nhãn — phải mã hóa một điều gì đó đúng về nội dung, chứ không phải để trang trí. Nhiều thiết kế chung chung dùng số thứ tự (01 / 02 / 03), nhưng cách đó chỉ hợp khi nội dung thực sự là một chuỗi — như một quy trình có thật hoặc một dòng thời gian có kiểu, nơi thứ tự mang thông tin người đọc cần. Hãy tự hỏi những lựa chọn kiểu đánh số như vậy có thật sự hợp lý không trước khi đưa vào.
 
-Leverage motion deliberately. Think about where and if animation can serve the subject: a page-load sequence, a scroll-triggered reveal, hover micro-interactions, ambient atmosphere. An orchestrated moment usually lands harder than scattered effects; choose what the direction calls for. However, sometimes less is more, and extra animation contributes to the feeling that the design is AI-generated.
+Dùng chuyển động một cách có chủ đích. Hãy nghĩ xem animation có thể phục vụ chủ thể ở đâu và có nên có không: một chuỗi khi tải trang, một hiệu ứng lộ ra khi cuộn, vi tương tác khi hover, không khí nền. Một khoảnh khắc được dàn dựng thường có sức nặng hơn nhiều hiệu ứng rời rạc; hãy chọn theo điều mà định hướng đòi hỏi. Tuy nhiên, đôi khi ít lại là nhiều, và animation thừa góp phần tạo cảm giác thiết kế do AI sinh ra.
 
-Match complexity to the vision. Maximalist directions need elaborate execution; minimal directions need precision in spacing, type, and detail. Elegance is executing the chosen vision well.
+Cho độ phức tạp khớp với tầm nhìn. Hướng maximalist cần thi công công phu; hướng tối giản cần sự chính xác trong giãn cách, chữ, và chi tiết. Sự thanh lịch nằm ở việc thực thi tốt tầm nhìn đã chọn.
 
-Consider written content carefully. Often a design brief may not contain real content, and it's up to you to come up with copy. Copy can make a design feel as templated as the design itself. See the below section on writing for more guidance.
+Cân nhắc kỹ phần chữ viết. Nhiều khi đề bài thiết kế không có nội dung thật, và bạn phải tự viết copy. Copy có thể làm thiết kế nghe rập khuôn y như bản thân thiết kế. Xem mục viết lách bên dưới để biết thêm.
 
-## Process: brainstorm, explore, plan, critique, build, critique again
+## Quy trình: brainstorm, khám phá, lên kế hoạch, phê bình, xây, phê bình lần nữa
 
-For calibration: AI-generated design right now clusters around three looks: (1) a warm cream background (near #F4F1EA) with a high-contrast serif display and a terracotta accent; (2) a near-black background with a single bright acid-green or vermilion accent; (3) a broadsheet-style layout with hairline rules, zero border-radius, and dense newspaper-like columns. All three are legitimate for some briefs, but they are defaults rather than choices, and they appear regardless of subject. Where the brief pins down a visual direction, follow it exactly — the brief's own words always win, including when it asks for one of these looks. Where it leaves an axis free, don't spend that freedom on one of these defaults. Just like a human designer who's hired, there's often a careful balance between doing what you're good at and taking each project as a chance to experiment and learn.
+Để hiệu chỉnh: thiết kế do AI sinh ra hiện đang tụ về ba kiểu nhìn: (1) nền kem ấm (gần #F4F1EA) với font serif tiêu đề tương phản cao và một màu nhấn đất nung; (2) nền gần đen với một màu nhấn xanh lá acid hoặc đỏ son duy nhất; (3) bố cục kiểu báo khổ rộng với đường kẻ mảnh, bo góc bằng không, và các cột dày đặc kiểu báo giấy. Cả ba đều hợp lệ với một số đề bài, nhưng chúng là mặc định chứ không phải lựa chọn, và chúng xuất hiện bất kể chủ thể là gì. Ở đâu đề bài đã chốt một định hướng hình ảnh, hãy theo đúng thế — lời của đề bài luôn thắng, kể cả khi nó yêu cầu đúng một trong ba kiểu này. Ở đâu đề bài để ngỏ một trục, đừng tiêu quyền tự do đó vào một trong các mặc định trên. Cũng như một nhà thiết kế được thuê, thường có một sự cân bằng cẩn thận giữa việc làm thứ mình giỏi và coi mỗi dự án là cơ hội để thử nghiệm và học.
 
-Work in two passes. First, brainstorm a short design plan based on the human's design brief: create a compact token system with color, type, layout, and signature. Color: describe the palette as 4–6 named hex values. Type: the typefaces for 2+ roles (a characterful display face that's used with restraint, a complementary body face, and a utility face for captions or data if needed). Layout: a layout concept, using one-sentence prose descriptions and ASCII wireframes to ideate and compare. Signature: the single unique element this page will be remembered by that embodies the brief in an appropriate way.
+Làm hai lượt. Lượt một, brainstorm một bản kế hoạch thiết kế ngắn dựa trên đề bài của người dùng: tạo một hệ token gọn gồm màu, chữ, bố cục, và điểm ký. Màu: mô tả bảng màu bằng 4–6 giá trị hex có tên. Chữ: font cho từ 2 vai trò trở lên (một font tiêu đề có cá tính dùng dè sẻn, một font nội dung bổ trợ, và một font tiện ích cho chú thích hoặc dữ liệu nếu cần). Bố cục: một ý tưởng bố cục, dùng mô tả một câu và wireframe ASCII để phác và so sánh. Điểm ký: yếu tố độc nhất mà trang này sẽ được nhớ tới, thể hiện đề bài một cách phù hợp.
 
-Then review that plan against the brief before building: if any part of it reads like the generic default you would produce for any similar page (work through a similar prompt to see if you arrive somewhere similar) rather than a choice made for this specific brief — revise that part, say what you changed and why. Only after you've confirmed the relative uniqueness of your design plan should you start to write the code, following the revised plan exactly and deriving every color and type decision from it.
+Sau đó soi lại bản kế hoạch đó với đề bài trước khi xây: nếu phần nào đọc lên giống thứ mặc định chung chung mà bạn sẽ tạo ra cho bất kỳ trang tương tự nào (thử chạy qua một prompt tương tự xem có ra chỗ giống vậy không) thay vì một lựa chọn dành riêng cho đề bài này — hãy sửa phần đó, và nói rõ bạn đổi gì và vì sao. Chỉ sau khi đã xác nhận được mức độ riêng biệt của bản kế hoạch thì mới bắt đầu viết code, theo đúng bản kế hoạch đã sửa và suy ra mọi quyết định về màu và chữ từ nó.
 
-When writing the code, be careful of structuring your CSS selector specificities. It's easy to generate CSS classes that cancel each other out (especially with a type-based selector like .section and a element-based selector like .cta). This can happen often with paddings/margins between sections.
+Khi viết code, cẩn thận với độ ưu tiên của CSS selector. Rất dễ sinh ra các class CSS triệt tiêu lẫn nhau (đặc biệt giữa selector theo kiểu như `.section` và selector theo phần tử như `.cta`). Chuyện này hay xảy ra với padding/margin giữa các section.
 
-Try to do a lot of this planning and iteration in your thinking, and only show ideas to the user when you have higher confidence it'll delight them.
+Cố gắng thực hiện phần lớn việc lên kế hoạch và lặp này trong suy nghĩ, và chỉ trình ý tưởng cho người dùng khi bạn đủ tự tin là nó sẽ làm họ hài lòng.
 
-## Restraint and self-critique
+## Tiết chế và tự phê bình
 
-Spend your boldness in one place. Let the signature element be the one memorable thing, keep everything around it quiet and disciplined, and cut any decoration that does not serve the brief. Not taking a risk can be a risk itself! Build to a quality floor without announcing it: responsive down to mobile, visible keyboard focus, reduced motion respected. Critique your own work as you build, taking screenshots if your environment supports it – a picture is worth 1000 tokens. Consider Chanel's advice: before leaving the house, take a look in the mirror and remove one accessory. Human creators have memory and always try to do something new, so if you have a space to quickly jot down notes about what you've tried, it can help you in future passes.
+Hãy tiêu sự táo bạo vào một chỗ duy nhất. Để yếu tố ký là thứ đáng nhớ duy nhất, giữ mọi thứ xung quanh nó im lặng và kỷ luật, và cắt bỏ mọi trang trí không phục vụ đề bài. Không dám mạo hiểm bản thân nó cũng là một rủi ro! Hãy xây tới một sàn chất lượng mà không cần tuyên bố: responsive xuống tới mobile, focus bàn phím nhìn thấy được, tôn trọng reduced motion. Tự phê bình công việc của mình trong lúc xây, chụp màn hình nếu môi trường của bạn hỗ trợ — một tấm hình đáng giá 1000 token. Nhớ lời khuyên của Chanel: trước khi ra khỏi nhà, soi gương và bỏ bớt một món phụ kiện. Người sáng tạo có trí nhớ và luôn cố làm thứ gì đó mới, nên nếu bạn có chỗ để ghi nhanh vài dòng về những gì đã thử, nó sẽ giúp bạn ở các lượt sau.
 
-## More on writing in design
+## Nói thêm về chữ viết trong thiết kế
 
-Words appear in a design for one reason: to make it easier to understand, and therefore easier to use. They are design material, not decoration. Bring the same intentionality to copy that you would bring to spacing and color. Before writing anything, ask what the design needs to say, and how it can best be said to help the person navigate the experience.
+Chữ xuất hiện trong một thiết kế vì một lý do: để dễ hiểu hơn, và nhờ vậy dễ dùng hơn. Chúng là vật liệu thiết kế, không phải đồ trang trí. Hãy mang vào copy đúng mức chủ đích như bạn mang vào giãn cách và màu sắc. Trước khi viết bất cứ chữ nào, hãy hỏi thiết kế này cần nói gì, và nói thế nào thì giúp người dùng đi qua trải nghiệm tốt nhất.
 
-Write from the end user's side of the screen. Name things by what people control and recognize, never by how the system is built. A person manages notifications, not webhook config. Describe what something does in plain terms rather than selling it. Being specific is always better than being clever.
+Viết từ phía người dùng cuối của màn hình. Gọi tên mọi thứ theo cái người ta điều khiển và nhận ra, không bao giờ theo cách hệ thống được xây. Một người quản lý thông báo, chứ không phải cấu hình webhook. Mô tả một thứ làm gì bằng lời lẽ giản dị thay vì rao bán nó. Cụ thể luôn tốt hơn thông minh.
 
-Use active voice as default. A control should say exactly what happens when it's used: "Save changes," not "Submit." An action keeps the same name through the whole flow, so the button that says "Publish" produces a toast that says "Published." The vocabulary of an interface is the signposting for someone navigating the product. Cohesion and consistency are how people learn their way around.
+Mặc định dùng thể chủ động. Một control phải nói đúng điều sẽ xảy ra khi dùng nó: "Lưu thay đổi", không phải "Gửi". Một hành động giữ nguyên tên xuyên suốt cả luồng, nên nút ghi "Phát hành" thì sinh ra toast ghi "Đã phát hành". Từ vựng của một giao diện là biển chỉ đường cho người đang đi trong sản phẩm. Sự gắn kết và nhất quán là cách người ta học đường đi lối lại.
 
-Treat failure and emptiness as moments for direction, not mood. Explain what went wrong and how to fix it, in the interface's voice rather than a person's. Errors don't apologize, and they are never vague about what happened. An empty screen is an invitation to act.
+Coi lỗi và trạng thái rỗng là những khoảnh khắc để chỉ đường, không phải để làm màu. Hãy giải thích chuyện gì đã sai và sửa thế nào, bằng giọng của giao diện chứ không phải giọng của một con người. Thông báo lỗi không xin lỗi, và không bao giờ mập mờ về chuyện đã xảy ra. Một màn hình trống là một lời mời hành động.
 
-Keep the register conversational and tuned: plain verbs, sentence case, no filler, with tone matched to the brand and the audience. Let each element do exactly one job. A label labels, an example demonstrates, and nothing quietly does double duty.
+Giữ giọng văn trò chuyện và có tinh chỉnh: động từ giản dị, viết hoa như câu thường, không chữ thừa, tông khớp với thương hiệu và đối tượng. Để mỗi phần tử làm đúng một việc. Nhãn thì làm nhãn, ví dụ thì minh họa, và không có gì lặng lẽ kiêm hai vai.

@@ -1,95 +1,96 @@
 ---
 name: frontend-feature
-description: Build or change React UI in frontend/. Use whenever work involves a component, screen, page, form, Redux slice, store state, API call from the browser, or any user-facing text — including "add a screen for X", "show Y in the UI", "wire up Z", or restyling existing components.
+description: Xây hoặc sửa giao diện React trong frontend/. Dùng bất cứ khi nào công việc động tới component, màn hình, page, form, Redux slice, state của store, lời gọi API từ trình duyệt, hoặc bất kỳ text nào người dùng thấy — kể cả "thêm màn hình cho X", "hiển thị Y lên UI", "nối Z vào", đổi style component có sẵn (add a screen for X, show Y in the UI, wire up Z, restyle components).
 ---
 
-# Building frontend features
+# Xây tính năng frontend
 
-The app follows atomic design with Redux Toolkit. The layers already exist — put
-new code in the right one rather than starting a parallel structure.
+App theo atomic design cùng Redux Toolkit. Các tầng đã có sẵn — đặt code mới vào đúng
+tầng thay vì dựng một cấu trúc song song.
 
-## Atomic design layers
+## Các tầng atomic design
 
-| Layer | Path | May it hold state? | May it touch the store? |
+| Tầng | Đường dẫn | Được giữ state? | Được chạm store? |
 |---|---|---|---|
-| atoms | `src/components/atoms/` | No — props only | **Never** |
-| molecules | `src/components/molecules/` | No — props only | **Never** |
-| organisms | `src/components/organisms/` | Yes, local UI state | **Yes** — this is the only layer that may |
-| templates | `src/components/templates/` | No — layout only | **Never** |
-| pages | `src/pages/` | No — composes organisms into a template | No |
+| atoms | `src/components/atoms/` | Không — chỉ props | **Không bao giờ** |
+| molecules | `src/components/molecules/` | Không — chỉ props | **Không bao giờ** |
+| organisms | `src/components/organisms/` | Có, state UI cục bộ | **Có** — tầng duy nhất được phép |
+| templates | `src/components/templates/` | Không — chỉ bố cục | **Không bao giờ** |
+| pages | `src/pages/` | Không — ghép organism vào template | Không |
 
-Atoms are single elements (`Button`, `Input`, `Text`, `Spinner`). Molecules combine
-a few atoms into one labelled unit (`FormField`, `ItemRow`). Organisms are the
-connected, meaningful sections (`ItemList`, `ItemForm`, `HealthBanner`). Templates
-are pure layout. Pages wire organisms into a template and nothing more.
+Atom là một phần tử đơn (`Button`, `Input`, `Text`, `Spinner`). Molecule gộp vài atom
+thành một đơn vị có nhãn (`FormField`, `ItemRow`). Organism là các khối có ý nghĩa và
+đã nối vào store (`ItemList`, `ItemForm`, `HealthBanner`). Template thuần bố cục. Page
+chỉ ghép organism vào template, không làm gì thêm.
 
-If a component needs `useAppSelector`, it is an organism. Pushing store access down
-into a molecule is the most common way this structure gets broken — pass data down
-as props instead.
+Nếu một component cần `useAppSelector`, nó là organism. Đẩy quyền truy cập store xuống
+molecule là cách phổ biến nhất làm hỏng cấu trúc này — hãy truyền dữ liệu xuống bằng
+props.
 
-## The rule that matters most
+## Quy tắc quan trọng nhất
 
-**No hardcoded user-facing strings, anywhere.** Every piece of text a person can
-read lives in `src/constants/strings.ts`, grouped by the screen that renders it.
+**Không hardcode chuỗi hiển thị cho người dùng, ở bất cứ đâu.** Mọi mẩu text người ta
+đọc được đều nằm trong `src/constants/strings.ts`, nhóm theo màn hình render nó.
 
 ```tsx
-<Button>Add item</Button>              // wrong
-<Button>{STRINGS.items.addAction}</Button>   // right
+<Button>Thêm mục</Button>                    // sai
+<Button>{STRINGS.items.addAction}</Button>   // đúng
 ```
 
-This holds for labels, placeholders, headings, empty states, loading text, error
-messages, and button captions. The same rule applies to tests: assert against
-`STRINGS.items.empty`, never the literal.
+Áp dụng cho nhãn, placeholder, tiêu đề, trạng thái rỗng, text đang tải, thông báo lỗi,
+và chữ trên nút. Test cũng theo quy tắc đó: assert vào `STRINGS.items.empty`, không bao
+giờ vào chuỗi viết thẳng.
 
-### What goes in which constants file
+### File hằng số nào chứa gì
 
-| File | Holds |
+| File | Chứa |
 |---|---|
-| `src/constants/strings.ts` | All human-readable text |
-| `src/constants/api.ts` | Endpoint paths, HTTP methods, headers, backend error codes |
-| `src/constants/config.ts` | Slice names, request-status values, pagination defaults, other magic numbers |
+| `src/constants/strings.ts` | Toàn bộ text người đọc được |
+| `src/constants/api.ts` | Đường dẫn endpoint, HTTP method, header, mã lỗi backend |
+| `src/constants/config.ts` | Tên slice, giá trị trạng thái request, mặc định phân trang, các số ma thuật khác |
 
-Import from the `src/constants` barrel (`import { STRINGS, SLICE } from '../../constants'`).
+Import từ barrel `src/constants`
+(`import { STRINGS, SLICE } from '../../constants'`).
 
-**Boundary:** CSS class names and `data-*` attribute values are structure, not
-content, so they stay inline. Everything a user can read does not.
+**Ranh giới:** tên class CSS và giá trị thuộc tính `data-*` là cấu trúc, không phải nội
+dung, nên chúng ở lại trong code. Mọi thứ người dùng đọc được thì không.
 
-## Steps for a new feature
+## Các bước cho một tính năng mới
 
-1. **Types.** Add the model to `src/types/models.ts`, matching the backend Pydantic
-   schema field for field. Envelope types (`DataResponse`, `PageResponse`) already
-   exist in `src/types/api.ts` — reuse them.
-2. **Constants.** Add the path to `API_ROUTES` in `src/constants/api.ts`, all text to
-   `STRINGS`, and the slice name to `SLICE` in `config.ts`.
-3. **API call.** Add to `src/api/endpoints.ts` using `apiClient`. Never call `fetch`
-   directly — `apiClient` owns the prefix, JSON headers, 204 handling, and the
-   `ApiError` translation of the backend error envelope.
-4. **Slice.** Create `src/store/slices/<feature>Slice.ts` with `createSlice` and
-   `createAsyncThunk`. Name thunks `` `${SLICE.x}/action` ``. Track a
-   `RequestStatus` field and compare against `STATUS.*`, never a raw `'loading'`.
-   Register the reducer in `src/store/index.ts`.
-5. **Components.** Build bottom-up: reuse existing atoms before adding one. Export
-   each new component from its layer's `index.ts` barrel.
-6. **Page.** Compose organisms inside `PageTemplate`.
-7. **Test.** Use `renderWithStore` from `src/test/utils.tsx` — it builds a fresh
-   store per test. Stub network with `vi.stubGlobal('fetch', ...)` returning the
-   real envelope shape (`{ data, meta }` or `{ error: { code, message } }`).
+1. **Kiểu.** Thêm model vào `src/types/models.ts`, khớp từng field với schema Pydantic
+   ở backend. Các kiểu envelope (`DataResponse`, `PageResponse`) đã có sẵn trong
+   `src/types/api.ts` — tái dùng chúng.
+2. **Hằng số.** Thêm đường dẫn vào `API_ROUTES` trong `src/constants/api.ts`, toàn bộ
+   text vào `STRINGS`, và tên slice vào `SLICE` trong `config.ts`.
+3. **Lời gọi API.** Thêm vào `src/api/endpoints.ts` dùng `apiClient`. Không bao giờ gọi
+   `fetch` trực tiếp — `apiClient` lo phần prefix, header JSON, xử lý 204, và chuyển
+   envelope lỗi của backend thành `ApiError`.
+4. **Slice.** Tạo `src/store/slices/<feature>Slice.ts` với `createSlice` và
+   `createAsyncThunk`. Đặt tên thunk theo dạng `` `${SLICE.x}/action` ``. Theo dõi một
+   field `RequestStatus` và so sánh với `STATUS.*`, không bao giờ so với `'loading'`
+   viết thẳng. Đăng ký reducer trong `src/store/index.ts`.
+5. **Component.** Xây từ dưới lên: tái dùng atom có sẵn trước khi thêm atom mới. Export
+   mỗi component mới từ barrel `index.ts` của tầng nó.
+6. **Page.** Ghép các organism bên trong `PageTemplate`.
+7. **Test.** Dùng `renderWithStore` từ `src/test/utils.tsx` — nó dựng store mới cho mỗi
+   test. Giả lập network bằng `vi.stubGlobal('fetch', ...)` trả về đúng dạng envelope
+   thật (`{ data, meta }` hoặc `{ error: { code, message } }`).
 
-## Store access
+## Truy cập store
 
-Always the typed hooks from `src/store/hooks.ts` (`useAppDispatch`,
-`useAppSelector`) — never raw `useDispatch` / `useSelector`, which lose the types.
-Select with the slice constant: `useAppSelector((state) => state[SLICE.items])`.
+Luôn dùng các hook đã gắn kiểu từ `src/store/hooks.ts` (`useAppDispatch`,
+`useAppSelector`) — không dùng `useDispatch` / `useSelector` trần, vì chúng làm mất kiểu.
+Chọn state bằng hằng slice: `useAppSelector((state) => state[SLICE.items])`.
 
-Thunk dispatches in effects and handlers are floating promises; prefix them with
-`void` so the intent is explicit.
+Dispatch thunk trong effect và handler là promise trôi nổi; thêm tiền tố `void` để thể
+hiện rõ đó là chủ ý.
 
-## Verify
+## Kiểm chứng
 
 ```bash
 cd frontend
 npm test && npm run typecheck && npm run lint
 ```
 
-`erasableSyntaxOnly` is on: no constructor parameter properties, no `enum`, no
-`namespace`. Use `as const` objects plus a derived union type instead of an enum.
+`erasableSyntaxOnly` đang bật: không constructor parameter property, không `enum`,
+không `namespace`. Dùng object `as const` cộng một union suy ra từ nó thay cho enum.
