@@ -34,7 +34,8 @@ from app.services.room import room_service
 from app.services.service_setting import service_setting_service
 from app.services.user import user_service
 
-ADMIN = UserCreate(username="admin", email="admin@ancu.example.com", password="admin123")
+# Not a .local address: that TLD is reserved, and EmailStr rejects it.
+ADMIN = UserCreate(username="admin", email="admin@smart.dev", password="admin123")
 
 IMAGES = {
     RoomType.STUDIO: [
@@ -70,7 +71,7 @@ TENANTS = [
     ("103", "Trần Thị Bình", "001299023456", "0912000103", "binh.tran@example.com", 1),
     ("202", "Lê Hoàng Cường", "001199034567", "0912000202", "cuong.le@example.com", 3),
     ("203", "Phạm Thu Dung", "001299045678", "0912000203", "dung.pham@example.com", 2),
-    ("301", "Vũ Minh Đức", "001199056789", "0912000301", "duc.vu@example.com", 1),
+    ("301", "Vũ Minh Đức", "001199056789", "0912000301", "nguyenluc1233@gmail.com", 1),
 ]
 
 # Three billed periods per occupied room, so the revenue chart has a shape.
