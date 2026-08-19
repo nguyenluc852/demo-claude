@@ -5,7 +5,7 @@ import { CONTACT_FORM_ANCHOR, SLICE, STRINGS } from '../../constants'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import { clearLeadMessage, submitLead } from '../../store/slices/publicSlice'
 import type { PublicRoom } from '../../types/models'
-import { Button } from '../atoms'
+import { Button, Icon } from '../atoms'
 import { FormField, Notice, TextareaField } from '../molecules'
 
 interface ContactFormProps {
@@ -109,16 +109,39 @@ export function ContactForm({ preselectedRoom }: ContactFormProps) {
             </Button>
           </form>
 
-          <div className="stack">
-            <article className="amenity">
-              <h3>{STRINGS.home.fireTitle}</h3>
-              <p>{STRINGS.home.fireBody}</p>
-            </article>
-            <article className="amenity">
-              <h3>{STRINGS.home.internetTitle}</h3>
-              <p>{STRINGS.home.internetBody}</p>
-            </article>
-          </div>
+          <aside className="contact-info">
+            <dl>
+              <div>
+                <dt>
+                  <Icon name="pin" />
+                  {STRINGS.home.contactAddressLabel}
+                </dt>
+                <dd>{STRINGS.home.contactAddress}</dd>
+              </div>
+              <div>
+                <dt>
+                  <Icon name="phone" />
+                  {STRINGS.home.contactPhoneLabel}
+                </dt>
+                <dd>
+                  <a className="num" href={`tel:${STRINGS.home.contactPhone}`}>
+                    {STRINGS.home.contactPhone}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt>
+                  <Icon name="clock" />
+                  {STRINGS.home.contactHoursLabel}
+                </dt>
+                <dd className="num">{STRINGS.home.contactHours}</dd>
+              </div>
+            </dl>
+            <p className="contact-promise">
+              <Icon name="check" />
+              {STRINGS.home.contactPromise}
+            </p>
+          </aside>
         </div>
       </div>
     </section>

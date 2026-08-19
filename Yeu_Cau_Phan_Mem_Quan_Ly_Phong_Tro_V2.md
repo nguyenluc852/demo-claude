@@ -30,7 +30,7 @@ Mục tiêu: Giới thiệu thương hiệu, quảng bá các gói phòng và c�
 * **Giao diện & Nhận diện:** Đồ họa hiện đại, trực quan, hỗ trợ responsive (hiển thị tốt trên Mobile và Desktop).
 * ** Khối thông tin Tiện ích cốt lõi:**
     * **Hệ thống PCCC (Phòng cháy chữa cháy):** Banner/Section nổi bật cam kết hệ thống đạt chuẩn an toàn, trang bị cảm biến khói tự động, vòi phun nước ngầm, lối thoát hiểm rõ ràng và bình chữa cháy định kỳ kiểm duyệt.
-    * **Hệ thống Internet/Mạng:** Giới thiệu hạ tầng mạng cáp quang tốc độ cao, cam kết băng thông ổn định cho từng phòng, hệ thống Wifi mesh phủ sóng toàn tòa nhà phục vụ làm việc/giải trí.
+    * **Hệ thống Internet/Mạng:** Giới thiệu hạ tầng mạng cáp quang tốc độ cao, cam kết băng thông ổn định cho từng phòng, hệ thống Wifi phủ sóng toàn tòa nhà phục vụ làm việc/giải trí.
     * **Các tiện ích khác:** Khu vực để xe an ninh (Camera 24/7, khóa vân tay), dịch vụ vệ sinh không gian chung, khu giặt sấy tiện lợi.
 * **Danh sách/Bộ sưu tập phòng mẫu:** Hiển thị hình ảnh thực tế, diện tích, giá thuê tham khảo và trạng thái phòng (Còn trống/Hết phòng).
 * **Form liên hệ/Đăng ký giữ chỗ:** Cho phép người dùng gửi thông tin tư vấn trực tiếp về cho hệ thống CMS của Admin.

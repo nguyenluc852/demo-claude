@@ -57,7 +57,7 @@ export const STRINGS = {
     leads: 'Yêu cầu tư vấn',
   },
   home: {
-    heroEyebrow: 'Ngõ 42 Vũ Trọng Phụng, Thanh Xuân, Hà Nội',
+    heroEyebrow: 'Ngõ 8/75 Phú Đô, Từ Liêm, Hà Nội',
     heroTitle: 'Tiền nhà tính ra từng dòng.',
     heroBody:
       'Mỗi tháng bạn nhận đúng bảng tính dưới đây qua email: chỉ số điện nước cũ và mới, đơn giá, thành tiền. Không có khoản nào bạn không tự cộng lại được.',
@@ -79,19 +79,86 @@ export const STRINGS = {
     fireTitle: 'Hệ thống PCCC đạt chuẩn',
     fireBody:
       'Cảm biến khói tự động từng tầng, vòi phun nước ngầm, lối thoát hiểm thông suốt và bình chữa cháy được kiểm định định kỳ.',
-    internetTitle: 'Internet cáp quang & Wifi mesh',
+    internetTitle: 'Internet cáp quang & Wifi',
     internetBody:
-      'Hạ tầng cáp quang riêng cho từng phòng, băng thông cam kết ổn định, Wifi mesh phủ sóng toàn tòa nhà cho làm việc và giải trí.',
+      'Hạ tầng cáp quang riêng cho từng phòng, băng thông cam kết ổn định, Wifi phủ sóng toàn tòa nhà cho làm việc và giải trí.',
     otherTitle: 'An ninh & tiện ích chung',
     otherBody:
       'Khu để xe có camera 24/7 và khóa vân tay, dịch vụ vệ sinh không gian chung, khu giặt sấy ngay trong tòa nhà.',
+    heroChipFire: 'PCCC đạt chuẩn',
+    heroChipInternet: 'Cáp quang riêng phòng',
+    heroChipSecurity: 'Camera 24/7',
+    bandEyebrow: 'Toà nhà',
+    bandTitle: 'Ngõ ô tô tránh, cách Sân Vận Động Mỹ Đình 900 m.',
+    bandBody:
+      'Chín tầng, thang bộ rộng, hành lang có đèn cảm ứng. Đi bộ 5 phút ra Công Viên Mễ Trì, 10 phút tới Sân Vận Động Mỹ Đình.',
+    statRooms: 'Phòng đang đăng',
+    statAvailable: 'Phòng còn trống',
+    statFromPrice: 'Giá thuê từ',
+    statMaxArea: 'Diện tích tới',
+    extrasHeading: 'Và những thứ nhỏ hơn nhưng dùng hằng ngày',
+    extraParking: 'Bãi xe khoá vân tay',
+    extraCamera: 'Camera hành lang 24/7',
+    extraCleaning: 'Vệ sinh khu chung hằng tuần',
+    extraLaundry: 'Máy giặt sấy dùng chung',
+    filterTypeLabel: 'Loại phòng',
+    filterStatusLabel: 'Trạng thái',
+    filterEmpty: 'Không có phòng nào khớp bộ lọc. Thử bỏ bớt một điều kiện.',
+    filterCount: 'phòng phù hợp',
+    processHeading: 'Thuê phòng ở đây gồm bốn bước',
+    processBody: 'Không có bước nào phát sinh chi phí ngoài hợp đồng.',
+    step1Title: 'Chọn phòng',
+    step1Body:
+      'Xem ảnh thật, diện tích và giá thuê ngay trên trang này. Không có phòng nào đăng giá khác giá ký.',
+    step2Title: 'Xem phòng thực tế',
+    step2Body:
+      'Để lại số điện thoại, chúng tôi gọi lại trong ngày và hẹn giờ bạn tiện. Xem cả phòng lẫn khu để xe, khu giặt.',
+    step3Title: 'Ký hợp đồng',
+    step3Body:
+      'Hợp đồng ghi rõ ngày bắt đầu, tiền cọc, kỳ thanh toán và đơn giá điện nước đang áp dụng.',
+    step4Title: 'Nhận tài khoản theo dõi',
+    step4Body:
+      'Ngay khi ký, hệ thống gửi email xác thực kèm tài khoản riêng. Đăng nhập là xem lại được mọi kỳ hoá đơn đã chốt.',
+    faqHeading: 'Hỏi nhanh, đáp thẳng',
+    faqBody: 'Những câu khách hay hỏi nhất khi gọi tới.',
+    faq1Q: 'Tiền điện nước tính thế nào?',
+    faq1A:
+      'Theo chỉ số công tơ riêng của từng phòng. Mỗi kỳ hệ thống ghi lại chỉ số cũ, chỉ số mới, đơn giá và thành tiền — đúng bảng bạn thấy ở đầu trang. Đơn giá tại thời điểm xuất hoá đơn được lưu lại, nên bảng giá đổi về sau không làm thay đổi hoá đơn đã phát hành.',
+    faq2Q: 'Đặt cọc bao nhiêu và khi nào được trả lại?',
+    faq2A:
+      'Cọc một tháng tiền phòng, ghi trong hợp đồng. Trả lại khi thanh lý hợp đồng, sau khi trừ hoá đơn kỳ cuối và chi phí hư hỏng nếu có.',
+    faq3Q: 'Hợp đồng tối thiểu bao lâu?',
+    faq3A:
+      'Sáu tháng. Hệ thống nhắc trước 30 ngày khi hợp đồng sắp hết hạn, nên không có chuyện tới ngày mới biết.',
+    faq4Q: 'Có giờ giới nghiêm không?',
+    faq4A:
+      'Không. Cửa chính dùng khoá vân tay, ra vào giờ nào cũng được. Chỉ đề nghị giữ yên tĩnh sau 23h.',
+    faq5Q: 'Có được nuôi thú cưng, nấu ăn trong phòng không?',
+    faq5A:
+      'Nấu ăn được, mỗi phòng có khu bếp riêng và quạt hút. Thú cưng nhỏ được, cần báo trước để ghi vào hợp đồng.',
+    faq6Q: 'Thanh toán bằng cách nào?',
+    faq6A:
+      'Chuyển khoản theo hoá đơn gửi qua email đầu mỗi kỳ. Hoá đơn ghi rõ đã trả bao nhiêu, còn lại bao nhiêu, không cần hỏi lại.',
     roomsHeading: 'Phòng mẫu',
     roomsBody: 'Bấm vào một phòng để xem toàn bộ hình ảnh và thông tin chi tiết.',
     roomsEmpty: 'Hiện chưa có phòng nào được đăng.',
     contactHeading: 'Đăng ký giữ chỗ',
     contactBody:
       'Để lại thông tin, chúng tôi sẽ gọi lại trong ngày để hẹn lịch xem phòng.',
+    contactAddressLabel: 'Địa chỉ',
+    contactAddress: 'Ngõ 8/75 Phú Đô, Từ Liêm, Hà Nội',
+    contactPhoneLabel: 'Gọi trực tiếp',
+    contactPhone: '0912 345 678',
+    contactHoursLabel: 'Giờ xem phòng',
+    contactHours: 'Thứ 2 – Chủ nhật, 8:00 – 20:00',
+    contactPromise: 'Gọi lại trong ngày. Không nhắn tin quảng cáo, không chuyển số cho bên thứ ba.',
     footerNote: 'Hệ thống quản lý phòng trọ thông minh.',
+    footerAboutHeading: 'Về nhà trọ',
+    footerAbout:
+      'Một toà nhà cho thuê ở Từ Liêm, vận hành bằng chính hệ thống này: chỉ số điện nước, hợp đồng và hoá đơn đều ghi lại được.',
+    footerLinksHeading: 'Xem nhanh',
+    footerContactHeading: 'Liên hệ',
+    footerRights: 'Mọi quyền được bảo lưu.',
   },
   room: {
     areaLabel: 'Diện tích',

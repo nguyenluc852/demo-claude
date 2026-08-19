@@ -1,6 +1,8 @@
 import { CONTACT_FORM_ANCHOR, LOCALE, ROOMS_ANCHOR, STRINGS } from '../../constants'
+import { useInView } from '../../hooks'
 import { formatMoney } from '../../utils/format'
-import { Button } from '../atoms'
+import { Button, Icon } from '../atoms'
+import type { IconName } from '../atoms'
 
 /**
  * The page's signature: one month of one room, written out the way the owner
@@ -43,13 +45,22 @@ const TOTAL = ROWS.reduce((sum, row) => sum + row.amount, 0)
 /** Each line lands in turn, so the sum reads as something being written down. */
 const ROW_DELAY_MS = 90
 
+/** The three commitments a visitor scans for before reading anything else. */
+const CHIPS = [
+  { icon: 'fire', label: STRINGS.home.heroChipFire },
+  { icon: 'wifi', label: STRINGS.home.heroChipInternet },
+  { icon: 'camera', label: STRINGS.home.heroChipSecurity },
+] as const satisfies readonly { icon: IconName; label: string }[]
+
 function scrollTo(anchor: string) {
   document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' })
 }
 
 export function LedgerHero() {
+  const [ref, inView] = useInView<HTMLElement>(0.05)
+
   return (
-    <section className="hero">
+    <section className="hero" ref={ref} data-inview={inView}>
       <div className="site-wrap hero-grid">
         <div>
           <span className="hero-eyebrow">{STRINGS.home.heroEyebrow}</span>
@@ -64,6 +75,15 @@ export function LedgerHero() {
               {STRINGS.home.heroSecondaryAction}
             </Button>
           </div>
+
+          <ul className="hero-chips">
+            {CHIPS.map((chip) => (
+              <li className="chip" key={chip.label}>
+                <Icon name={chip.icon} />
+                {chip.label}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <div>

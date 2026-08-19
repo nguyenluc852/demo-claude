@@ -131,3 +131,20 @@ export const CURRENCY = 'VND' as const
 
 export const CONTACT_FORM_ANCHOR = 'contact-form' as const
 export const ROOMS_ANCHOR = 'rooms' as const
+export const AMENITIES_ANCHOR = 'amenities' as const
+export const PROCESS_ANCHOR = 'process' as const
+export const FAQ_ANCHOR = 'faq' as const
+
+/**
+ * Photography the homepage leans on. Remote like the seeded room images, so the
+ * repo stays free of stock photos; the drawn icons live in src/assets instead.
+ */
+export const HOME_MEDIA = {
+  building: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&q=80',
+} as const
+
+/** How long the stat counters take to run up to their real value. */
+export const COUNT_UP_MS = 900 as const
+
+/** Stagger between cards in a revealing grid. */
+export const STAGGER_MS = 70 as const

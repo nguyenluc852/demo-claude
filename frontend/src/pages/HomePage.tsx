@@ -3,12 +3,15 @@ import { useState } from 'react'
 import {
   AmenitiesSection,
   ContactForm,
+  FaqSection,
   LedgerHero,
+  ProcessSection,
+  PropertyBand,
   RoomShowcase,
+  SiteFooter,
   SiteHeader,
 } from '../components/organisms'
 import { SiteLayout } from '../components/templates'
-import { STRINGS } from '../constants'
 import type { PublicRoom } from '../types/models'
 
 export function HomePage() {
@@ -16,19 +19,13 @@ export function HomePage() {
   const [bookingRoom, setBookingRoom] = useState<PublicRoom | null>(null)
 
   return (
-    <SiteLayout
-      header={<SiteHeader />}
-      footer={
-        <footer className="site-footer">
-          <div className="site-wrap">
-            {STRINGS.app.title} — {STRINGS.home.footerNote}
-          </div>
-        </footer>
-      }
-    >
+    <SiteLayout header={<SiteHeader />} footer={<SiteFooter />}>
       <LedgerHero />
+      <PropertyBand />
       <AmenitiesSection />
       <RoomShowcase onBookRoom={setBookingRoom} />
+      <ProcessSection />
+      <FaqSection />
       <ContactForm preselectedRoom={bookingRoom} />
     </SiteLayout>
   )
