@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.constants import (
     Collection,
     Field,
+    InvoiceStatus,
     PaymentCycle,
     RoomStatus,
     RoomType,
@@ -29,11 +30,48 @@ from app.schemas.meter import MeterReadingSave
 from app.schemas.room import RoomCreate
 from app.schemas.user import UserCreate
 from app.services.contract import contract_service
+from app.services.invoice import invoice_service
 from app.services.lead import lead_service
 from app.services.meter import meter_service
 from app.services.room import room_service
 from app.services.service_setting import service_setting_service
 from app.services.user import user_service
+
+# Oldest period settled, the one before last half paid, the newest still open.
+# That leaves every seeded tenant with a real arrears figure to look at rather
+# than a portal full of drafts.
+ISSUE_PLAN = (InvoiceStatus.PAID, InvoiceStatus.PARTIALLY_PAID, InvoiceStatus.UNPAID)
+
+
+async def issue_invoices(room_id: str, periods: list[str]) -> None:
+    """Walk the seeded drafts through the states a real month would produce.
+
+    Deliberately *not* `invoice_service.send()`: that mails the tenant, and one
+    of the seeded addresses is a real mailbox. This reproduces what sending then
+    collecting leaves behind, without any outbound mail.
+
+    Only drafts are touched, so re-running the seed never resets an invoice that
+    has already been settled by hand.
+    """
+    invoices = mongo.get_collection(Collection.INVOICES)
+    for period, status in zip(periods, ISSUE_PLAN, strict=False):
+        document = await invoices.find_one({Field.ROOM_ID: room_id, Field.PERIOD: period})
+        if document is None or document.get(Field.STATUS) != InvoiceStatus.DRAFT:
+            continue
+
+        invoice_id = str(document[Field.ID])
+        # `send()` stamps this alongside the status; the CMS reads it to decide
+        # between "send" and "resend", so a status change without it is a lie.
+        await invoices.update_one(
+            {Field.ID: document[Field.ID]}, {"$set": {"sent_at": datetime.now(UTC)}}
+        )
+        await invoice_service.set_status(invoice_id, InvoiceStatus.UNPAID)
+
+        total = float(document[Field.TOTAL])
+        if status == InvoiceStatus.PAID:
+            await invoice_service.record_payment(invoice_id, total)
+        elif status == InvoiceStatus.PARTIALLY_PAID:
+            await invoice_service.record_payment(invoice_id, round(total / 2))
 
 
 def admin_account() -> UserCreate:
@@ -201,7 +239,8 @@ async def seed() -> None:
                 room_id,
                 MeterReadingSave(period=period, electric_new=electric, water_new=water),
             )
-        print(f"metered {number} for {', '.join(periods)}")
+        await issue_invoices(room_id, periods)
+        print(f"metered and issued {number} for {', '.join(periods)}")
 
     await room_service.set_status(ObjectId(rooms[MAINTENANCE_ROOM]), RoomStatus.MAINTENANCE)
 
