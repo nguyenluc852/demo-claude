@@ -46,11 +46,31 @@ export const fetchMe = createAsyncThunk(`${SLICE.auth}/me`, async () => {
   return response.data
 })
 
+/** The state this thunk inspects, spelled out here so the slice does not have
+ *  to import RootState from the store that imports it. */
+type StateWithAuth = { [SLICE.auth]: AuthState }
+
 export const verifyEmail = createAsyncThunk(
   `${SLICE.auth}/verify`,
   async (token: string) => {
     const response = await authApi.verify(token)
     return response.data.message
+  },
+  {
+    /**
+     * The link is single use: the API clears the token as it verifies, so a
+     * second call for the same token is a genuine 400 and would overwrite the
+     * success already on screen with a failure.
+     *
+     * React's StrictMode runs effects twice in development, which is exactly
+     * how the bug showed up — one 200 followed by one 400, same token. Guarding
+     * here rather than in the component also covers a double click and a
+     * re-render, which are the production versions of the same race.
+     */
+    condition: (_token, { getState }) => {
+      const { verifyStatus } = (getState() as StateWithAuth)[SLICE.auth]
+      return verifyStatus !== STATUS.loading && verifyStatus !== STATUS.succeeded
+    },
   },
 )
 
