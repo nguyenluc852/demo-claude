@@ -598,6 +598,14 @@ tbody tr:hover {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* Page-level tabs double as navigation and sit directly above the first card.
+   Their bottom border would otherwise touch it and read as one control. Scoped
+   to the page header so the tabs inside a card's section-head keep their own
+   spacing. */
+.site-section > header > .tabs {
+  margin-bottom: var(--space-4);
+}
+
 .tab {
   background: none;
   border: none;
