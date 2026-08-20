@@ -421,7 +421,8 @@ export const STRINGS = {
     balanceCurrent: 'Hóa đơn kỳ này',
     balancePrevious: 'Còn nợ kỳ trước',
     balanceDueDate: 'Hạn gần nhất',
-    balanceSettled: 'Bạn đã thanh toán đủ. Không có khoản nào đến hạn.',
+    invoicePreviousDue: 'Còn nợ các kỳ trước',
+    invoiceAmountDue: 'Tổng cần chuyển khoản',
     balanceCarryOver:
       'Số này gồm cả phần chưa trả hết của các kỳ trước, không chỉ riêng hóa đơn kỳ này.',
     usageLatest: 'Kỳ gần nhất',

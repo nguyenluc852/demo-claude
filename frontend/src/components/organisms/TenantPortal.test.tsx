@@ -136,6 +136,21 @@ const OUTSTANDING_BALANCE: TenantBalance = {
   unpaid_count: 2,
 }
 
+/**
+ * Cùng dữ liệu công nợ nhưng `current_period` trùng kỳ của `detailedInvoice`,
+ * để mở modal đúng hóa đơn đang được yêu cầu trả. Tách khỏi OUTSTANDING_BALANCE
+ * vì bốn con số của fixture kia cố ý khác nhau, không đổi được.
+ * Còn phải trả 1.500.000 + nợ cũ 700.000 = 2.200.000, không trùng ô nào khác.
+ */
+const CURRENT_PERIOD_BALANCE: TenantBalance = {
+  outstanding: 2_200_000,
+  current_due: 1_500_000,
+  previous_due: 700_000,
+  current_period: detailedInvoice.period,
+  due_date: '2026-08-05T00:00:00',
+  unpaid_count: 2,
+}
+
 const SETTLED_BALANCE: TenantBalance = {
   outstanding: 0,
   current_due: 0,
@@ -230,6 +245,12 @@ function balanceSection() {
   )
 }
 
+/** Reads the number sitting under `label` inside the open detail modal. */
+function detailValue(dialog: HTMLElement, label: string): string | null {
+  const cell = within(dialog).getByText(label).parentElement as HTMLElement
+  return cell.querySelector('.num')?.textContent?.replace(/\s+/g, ' ') ?? null
+}
+
 /** Reads the value out of a balance card by its label. */
 function balanceValue(label: string): string | null {
   const card = balanceSection().getByText(label).closest('.stat') as HTMLElement
@@ -254,7 +275,6 @@ describe('TenantPortal balance', () => {
     )
 
     expect(balanceSection().getByText(STRINGS.tenant.balanceCarryOver)).toBeInTheDocument()
-    expect(balanceSection().queryByText(STRINGS.tenant.balanceSettled)).toBeNull()
   })
 
   it('drops the carry-over note when nothing is left from earlier periods', async () => {
@@ -269,20 +289,21 @@ describe('TenantPortal balance', () => {
     expect(balanceSection().queryByText(STRINGS.tenant.balanceCarryOver)).toBeNull()
   })
 
-  it('replaces the cards with a settled notice when nothing is owed', async () => {
+  it('drops the whole section when nothing is owed', async () => {
     await renderPortal(INVOICES, undefined, SETTLED_BALANCE)
 
-    const section = balanceSection()
-    expect(section.getByText(STRINGS.tenant.balanceSettled)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: STRINGS.tenant.balanceHeading }),
+    ).toBeNull()
     for (const label of [
       STRINGS.tenant.balanceOutstanding,
       STRINGS.tenant.balanceCurrent,
       STRINGS.tenant.balancePrevious,
       STRINGS.tenant.balanceDueDate,
+      STRINGS.tenant.balanceCarryOver,
     ]) {
-      expect(section.queryByText(label, { exact: false })).toBeNull()
+      expect(screen.queryByText(label, { exact: false })).toBeNull()
     }
-    expect(section.queryByText(STRINGS.tenant.balanceCarryOver)).toBeNull()
   })
 })
 
@@ -427,5 +448,47 @@ describe('TenantPortal invoice history', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: STRINGS.common.close }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+})
+
+describe('TenantPortal invoice arrears', () => {
+  it('adds what is left from earlier periods onto the invoice being paid now', async () => {
+    await renderPortal(INVOICES, undefined, CURRENT_PERIOD_BALANCE)
+
+    await openDetail(detailedInvoice.period)
+    const dialog = await screen.findByRole('dialog')
+
+    const remaining = detailedInvoice.total - detailedInvoice.paid_amount
+    expect(detailValue(dialog, STRINGS.tenant.invoicePreviousDue)).toBe(
+      money(CURRENT_PERIOD_BALANCE.previous_due),
+    )
+    expect(detailValue(dialog, STRINGS.tenant.invoiceAmountDue)).toBe(
+      money(remaining + CURRENT_PERIOD_BALANCE.previous_due),
+    )
+  })
+
+  it('leaves the arrears off an older invoice, where they would count twice', async () => {
+    await renderPortal(INVOICES, undefined, CURRENT_PERIOD_BALANCE)
+
+    await openDetail(olderInvoice.period)
+    const detail = within(await screen.findByRole('dialog'))
+
+    expect(detail.queryByText(STRINGS.tenant.invoicePreviousDue)).toBeNull()
+    expect(detail.queryByText(STRINGS.tenant.invoiceAmountDue)).toBeNull()
+  })
+
+  it('leaves the arrears off entirely when earlier periods are settled', async () => {
+    await renderPortal(INVOICES, undefined, {
+      ...CURRENT_PERIOD_BALANCE,
+      outstanding: CURRENT_PERIOD_BALANCE.current_due,
+      previous_due: 0,
+      unpaid_count: 1,
+    })
+
+    await openDetail(detailedInvoice.period)
+    const detail = within(await screen.findByRole('dialog'))
+
+    expect(detail.queryByText(STRINGS.tenant.invoicePreviousDue)).toBeNull()
+    expect(detail.queryByText(STRINGS.tenant.invoiceAmountDue)).toBeNull()
   })
 })
