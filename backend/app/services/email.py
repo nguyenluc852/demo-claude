@@ -52,14 +52,6 @@ _STYLE_BUTTON = (
 )
 _STYLE_FOOTER = "padding:18px 32px;background:#f8fafc;color:#64748b;font-size:12px;"
 
-_BANK_LINES = (
-    "Ngân hàng: Vietcombank — Chi nhánh Hà Nội",
-    "Số tài khoản: 0123456789",
-    "Chủ tài khoản: BAN QUAN LY NHA TRO",
-    "Nội dung: {room_number} {period}",
-)
-
-
 def _money(amount: float) -> str:
     return f"{amount:,.0f}{EmailTemplate.CURRENCY_SUFFIX}"
 
@@ -208,7 +200,8 @@ def render_invoice_email(invoice: InvoiceSchema, settlement: InvoiceSettlement) 
     )
     room_number = invoice.room_number or ""
     bank = "<br>".join(
-        line.format(room_number=room_number, period=invoice.period) for line in _BANK_LINES
+        line.format(room_number=room_number, period=invoice.period)
+        for line in EmailTemplate.INVOICE_BANK_LINES
     )
 
     subtitle = EmailTemplate.INVOICE_INTRO.format(

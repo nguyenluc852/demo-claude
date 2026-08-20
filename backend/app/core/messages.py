@@ -117,6 +117,14 @@ class EmailTemplate:
     )
     INVOICE_DUE_LABEL: Final = "Hạn thanh toán"
     INVOICE_BANK_HEADING: Final = "Thông tin chuyển khoản"
+    # Shown to the tenant, so it belongs here rather than in the service that
+    # formats it. `{room_number}` and `{period}` become the transfer reference.
+    INVOICE_BANK_LINES: Final = (
+        "Ngân hàng: Vietcombank — Chi nhánh Hà Nội",
+        "Số tài khoản: 0123456789",
+        "Chủ tài khoản: BAN QUAN LY NHA TRO",
+        "Nội dung: {room_number} {period}",
+    )
     INVOICE_FOOTER: Final = (
         "Email được gửi tự động từ hệ thống quản lý nhà trọ. Vui lòng không trả lời email này."
     )

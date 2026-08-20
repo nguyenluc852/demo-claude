@@ -24,6 +24,8 @@ PART_PAYMENT = 1_200_000.0
 PREVIOUS_DUE = 2_400_000.0
 
 PDF_MAGIC = b"%PDF-"
+# Every template placeholder opens with this, so its absence proves none leaked.
+PLACEHOLDER_MARKER = "{"
 LABEL_COLUMN = 0
 
 
@@ -145,3 +147,20 @@ def test_pdf_builds_with_and_without_arrears() -> None:
 
     for settlement in (settled, in_arrears):
         assert render_invoice_pdf(_invoice(), settlement).startswith(PDF_MAGIC)
+
+
+def test_email_carries_the_bank_details_with_the_transfer_reference() -> None:
+    """The reference line is how a transfer is matched back to a room and a
+    period; formatted wrong, the money lands with nothing identifying it.
+    """
+    invoice = _invoice()
+
+    html = render_invoice_email(invoice, _settlement())
+
+    assert EmailTemplate.INVOICE_BANK_HEADING in html
+    for line in EmailTemplate.INVOICE_BANK_LINES:
+        assert line.format(room_number=invoice.room_number, period=invoice.period) in html
+    # No placeholder survives the formatting, whatever the lines end up saying.
+    assert PLACEHOLDER_MARKER not in html
+    assert invoice.room_number is not None
+    assert f"{invoice.room_number} {invoice.period}" in html
