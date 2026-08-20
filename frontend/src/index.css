@@ -1012,7 +1012,11 @@ tbody tr:hover {
 }
 
 .site-section {
-  padding: var(--space-7) 0;
+  /* padding-block, not the shorthand: on the homepage this is the outer band
+     with `.site-wrap` nested inside, but the tenant pages put both classes on
+     one element. The shorthand's implicit `0` then wiped `.site-wrap`'s gutter
+     and the cards sat flush against the screen edge on a phone. */
+  padding-block: var(--space-7);
 }
 
 .site-section h2 {
@@ -1665,9 +1669,12 @@ tbody tr:hover {
 /* --- Invoice detail --------------------------------------------------- */
 
 .invoice-total {
-  display: flex;
+  /* Grid, not a flex row: these cells hold `.num` values that must not wrap
+     mid-figure, so a nowrap row overflows the modal on a narrow screen instead
+     of folding. auto-fit keeps one row wherever there is width for it. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   align-items: baseline;
-  justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-4);
   border-radius: var(--radius);
@@ -1738,4 +1745,90 @@ tbody tr:hover {
   font-family: var(--font-display);
   font-size: 1.05rem;
   letter-spacing: -0.02em;
+}
+
+
+/* --- Phones ------------------------------------------------------------
+   Below this width the desktop gutters eat more of the screen than the
+   content they frame, so every horizontal padding steps down one notch and
+   the header stacks. Tables keep scrolling inside `.table-scroll` — a seven
+   column ledger cannot be made to fit 390px and stay readable. */
+
+@media (max-width: 640px) {
+  .site-wrap {
+    padding: 0 var(--space-4);
+  }
+
+  .site-section {
+    padding-block: var(--space-6);
+  }
+
+  /* Logo on one row, account controls on the next: side by side they leave the
+     buttons about 90px, which is not enough for two of them. */
+  .site-header {
+    flex-wrap: wrap;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .site-header nav {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* The signed-in address costs a whole row here and pushes the two buttons
+     onto a third. Who you are is on the profile screen; what you can do is
+     not, so the controls win the space. */
+  .site-header [data-tone='muted'] {
+    display: none;
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  /* Two tiles per row rather than one: the values are short and a single
+     column turns the balance card into a tall scroll. */
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: var(--space-2);
+  }
+
+  .stat {
+    padding: var(--space-3);
+  }
+
+  .modal-backdrop {
+    padding: var(--space-3);
+  }
+
+  .modal-head,
+  .modal-body,
+  .modal-foot {
+    padding: var(--space-4);
+  }
+
+  th,
+  td {
+    padding: var(--space-2);
+  }
+
+  /* Swiping a wide table sideways must not hand the gesture to the browser's
+     back navigation once it reaches the end. */
+  .table-scroll {
+    overscroll-behavior-x: contain;
+  }
+
+  /* 1.6rem is a desktop headline size: in a wrapped two-up column it needs
+     163px for a figure like 5.445.000 ₫ and the cell is 129px, and `.num`
+     cannot break mid-number. */
+  .invoice-total b {
+    font-size: 1.2rem;
+  }
+
+  /* recharts sizes its wrapper from a measurement, so between a rotation and
+     the next observer tick the old width can be wider than the card. Capping it
+     means the card never gets stretched by the lag. */
+  .recharts-wrapper {
+    max-width: 100%;
+  }
 }
