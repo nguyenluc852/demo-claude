@@ -8,9 +8,18 @@ import {
 } from '../../store/slices/tenantSlice'
 import type { Invoice, InvoiceLine } from '../../types/models'
 import { formatDate, formatMoney, formatNumber } from '../../utils/format'
-import { invoiceStatusLabel, invoiceStatusTone, serviceUnitLabel } from '../../utils/labels'
+import { invoiceStatusLabel, invoiceStatusTone } from '../../utils/labels'
 import { Button, Spinner } from '../atoms'
-import { EmptyState, Modal, Notice, StatCard, StatusBadge, Tabs, UsageChart } from '../molecules'
+import {
+  EmptyState,
+  InvoiceLineTable,
+  Modal,
+  Notice,
+  StatCard,
+  StatusBadge,
+  Tabs,
+  UsageChart,
+} from '../molecules'
 import type { UsagePoint } from '../molecules'
 
 /* The two series read their colour from the palette rather than carrying a hex:
@@ -171,44 +180,7 @@ export function TenantPortal() {
           title={`${STRINGS.invoice.detailHeading} · ${selected.period}`}
           onClose={() => setSelected(null)}
         >
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{STRINGS.invoice.lineDescription}</th>
-                  <th className="num">{STRINGS.invoice.lineOld}</th>
-                  <th className="num">{STRINGS.invoice.lineNew}</th>
-                  <th className="num">{STRINGS.invoice.lineUsage}</th>
-                  <th className="num">{STRINGS.invoice.lineUnitPrice}</th>
-                  <th className="num">{STRINGS.invoice.lineAmount}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{STRINGS.invoice.rentLine}</td>
-                  <td className="num">{STRINGS.common.unknown}</td>
-                  <td className="num">{STRINGS.common.unknown}</td>
-                  <td className="num">1</td>
-                  <td className="num">{formatMoney(selected.room_charge)}</td>
-                  <td className="num">{formatMoney(selected.room_charge)}</td>
-                </tr>
-                {selected.lines.map((line) => (
-                  <tr key={line.code}>
-                    <td>
-                      {line.name}
-                      <br />
-                      <span data-tone="muted">{serviceUnitLabel(line.unit)}</span>
-                    </td>
-                    <td className="num">{formatNumber(line.meter_old)}</td>
-                    <td className="num">{formatNumber(line.meter_new)}</td>
-                    <td className="num">{formatNumber(line.quantity)}</td>
-                    <td className="num">{formatMoney(line.unit_price)}</td>
-                    <td className="num">{formatMoney(line.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <InvoiceLineTable invoice={selected} />
 
           <div className="invoice-total">
             <div>

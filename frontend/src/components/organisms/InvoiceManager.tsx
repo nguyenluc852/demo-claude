@@ -12,15 +12,14 @@ import {
   setStatusFilter,
 } from '../../store/slices/invoicesSlice'
 import type { Invoice } from '../../types/models'
-import { formatDate, formatMoney, formatNumber } from '../../utils/format'
+import { formatDate, formatMoney } from '../../utils/format'
 import {
   INVOICE_STATUS_OPTIONS,
   invoiceStatusLabel,
   invoiceStatusTone,
-  serviceUnitLabel,
 } from '../../utils/labels'
 import { Button, Input, Select, Spinner } from '../atoms'
-import { EmptyState, Modal, Notice, StatusBadge } from '../molecules'
+import { EmptyState, InvoiceLineTable, Modal, Notice, StatusBadge } from '../molecules'
 
 /** Downloads the PDF the API renders, then releases the temporary object URL. */
 async function downloadPdf(invoice: Invoice) {
@@ -181,44 +180,7 @@ export function InvoiceManager() {
             </>
           }
         >
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{STRINGS.invoice.lineDescription}</th>
-                  <th className="num">{STRINGS.invoice.lineOld}</th>
-                  <th className="num">{STRINGS.invoice.lineNew}</th>
-                  <th className="num">{STRINGS.invoice.lineUsage}</th>
-                  <th className="num">{STRINGS.invoice.lineUnitPrice}</th>
-                  <th className="num">{STRINGS.invoice.lineAmount}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{STRINGS.invoice.rentLine}</td>
-                  <td className="num">{STRINGS.common.unknown}</td>
-                  <td className="num">{STRINGS.common.unknown}</td>
-                  <td className="num">1</td>
-                  <td className="num">{formatMoney(selected.room_charge)}</td>
-                  <td className="num">{formatMoney(selected.room_charge)}</td>
-                </tr>
-                {selected.lines.map((line) => (
-                  <tr key={line.code}>
-                    <td>
-                      {line.name}
-                      <br />
-                      <span data-tone="muted">{serviceUnitLabel(line.unit)}</span>
-                    </td>
-                    <td className="num">{formatNumber(line.meter_old)}</td>
-                    <td className="num">{formatNumber(line.meter_new)}</td>
-                    <td className="num">{formatNumber(line.quantity)}</td>
-                    <td className="num">{formatMoney(line.unit_price)}</td>
-                    <td className="num">{formatMoney(line.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <InvoiceLineTable invoice={selected} />
 
           <div className="invoice-total">
             <div>
