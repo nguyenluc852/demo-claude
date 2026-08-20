@@ -11,7 +11,9 @@ coi mọi chỉnh sửa ở đây là quyết định về sản phẩm, không 
 
 - **Ký hợp đồng làm ba việc**: tạo hợp đồng thuê, chuyển phòng sang `occupied`, và tạo
   tài khoản đăng nhập cho khách thuê (username = email, mật khẩu mặc định = số điện
-  thoại) kèm email xác thực. Chấm dứt hoặc xóa hợp đồng thì trả phòng về `available`.
+  thoại) kèm email xác thực. **Email là best-effort, ba việc kia thì không**: mail
+  hỏng chỉ ghi log, hợp đồng vẫn được tạo. Ba lần ghi đã xong trước khi gửi và không
+  có transaction để hoàn tác, nên ném lỗi ở đó là báo thất bại cho việc đã thành công. Chấm dứt hoặc xóa hợp đồng thì trả phòng về `available`.
 - **Khách thuê chưa bấm link xác thực thì chưa đăng nhập được.** Tài khoản nhân viên
   được tin cậy ngay khi tạo nên bỏ qua bước này. Sửa email trên hợp đồng sẽ reset trạng
   thái xác thực và gửi link mới.

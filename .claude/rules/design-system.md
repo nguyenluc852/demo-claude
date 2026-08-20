@@ -48,6 +48,36 @@ Bo góc rộng tay và nút bo tròn hoàn toàn thành viên thuốc. Nhưng co
 - Mọi hiệu ứng chuyển động phải tắt trong `@media (prefers-reduced-motion: reduce)` —
   file đã có sẵn một block, mở rộng nó chứ đừng viết block thứ hai.
 
+## Responsive
+
+Hai breakpoint, mỗi cái có lý do riêng — đừng gộp lại thành một:
+
+| Mốc | Đổi gì |
+|---|---|
+| `max-width: 860px` | Rail điều hướng CMS gập thành hamburger; **bảng đổi thành card** |
+| `max-width: 640px` | Padding ngang hạ một nấc, header trang công khai xếp hai dòng |
+
+**Bảng nhiều cột không đọc được trên điện thoại**, mà vuốt ngang thì tranh chấp với cử
+chỉ back của trình duyệt. Cách xử lý đã chốt, dùng chung cho mọi bảng:
+
+- Wrapper là `<div className="table-scroll table-cards">`.
+- **Mỗi `<td>` dữ liệu mang `data-label` bằng đúng tiêu đề cột của nó.** Ô chứa nút thao
+  tác cố ý không có — nó chiếm trọn chiều ngang của card.
+- Dưới 860px, CSS đổi `table/tbody/tr/td` thành `display: block` và in nhãn qua
+  `td::before { content: attr(data-label) }`.
+
+**Một markup duy nhất, không dựng bản thứ hai cho mobile.** Hai bản nghĩa là hai nguồn
+sự thật, và chỗ quên sửa sẽ im lặng. Thêm một cột thì thêm `data-label` cùng lúc —
+có test đối chiếu danh sách `columnheader` với `data-label` nên quên là đỏ.
+
+`thead` bị ẩn bằng visually-hidden (`clip-path`), **không phải `display: none`** — cách
+kia gỡ tiêu đề khỏi accessibility tree, mà trình đọc màn hình vẫn cần nó để ghép cặp
+tiêu đề–ô.
+
+Ngoại lệ cố ý: bảng dòng hóa đơn trong modal (`InvoiceLineTable`) giữ nguyên dạng bảng
+cuộn. Đó là dữ liệu cột thật, đọc bằng cách so hàng với hàng; đổi thành card sẽ thành
+mấy chục cặp nhãn–giá trị cho một hóa đơn.
+
 ## Lịch sử
 
 Hệ thống trước đây bám vào công tơ điện và cuốn sổ kẻ dòng: nền giấy, mực bút bi,

@@ -8,7 +8,9 @@ Hệ thống quản lý nhà trọ, xây theo SRS trong
 `Yeu_Cau_Phan_Mem_Quan_Ly_Phong_Tro_V2.md`. Một lần deploy phục vụ hai nhóm người
 dùng: trang chủ công khai để quảng cáo phòng và nhận liên hệ, và một CMS để chủ trọ
 quản lý phòng, hợp đồng, chỉ số điện nước hằng tháng, và hóa đơn. Khách thuê có cổng
-thông tin riêng, chỉ đọc.
+thông tin riêng, chỉ đọc, gồm hai màn: `/tenant` trả lời "tôi đang dùng bao nhiêu, còn
+nợ bao nhiêu" (công nợ, biểu đồ mức sử dụng, lịch sử hóa đơn), và `/tenant/profile`
+giữ phần tra cứu (thông tin cá nhân, hợp đồng, phòng).
 
 **Giao diện bằng tiếng Việt.** Mọi chuỗi người dùng nhìn thấy nằm trong
 `frontend/src/constants/strings.ts`, còn thông báo của API nằm trong
@@ -31,6 +33,9 @@ Hai app nối với nhau bằng proxy, không phải CORS — xem rule `api-cont
   Animation của trang chủ nằm ở `src/hooks/` (`useInView` dựa trên IntersectionObserver,
   `useCountUp`) cộng helper `stagger()` trong `src/utils/style.ts` — không phải thư viện
   animation nào. jsdom không có IntersectionObserver nên `src/test/setup.ts` stub sẵn nó.
+  Biểu đồ dùng **recharts** (`RevenueChart` ở CMS, `UsageChart` ở cổng khách thuê).
+  `ResponsiveContainer` đo bề rộng phần tử cha, mà jsdom luôn trả 0, nên **không test
+  nào assert được vào SVG** — chỉ khóa được phần dựng dữ liệu.
 
 ## Skills
 
@@ -123,7 +128,12 @@ nhầm interpreter.
 ```
 
 `scripts/seed.py` chạy lại được nhiều lần: nó tạo một admin, tám phòng, năm hợp đồng,
-ba kỳ đã xuất hóa đơn, và vài liên hệ. Chạy lại thì bù thêm dữ liệu còn thiếu. Nhưng nó
+ba kỳ hóa đơn, và vài liên hệ. Ba kỳ đó được **phát hành** chứ không để nháp — kỳ cũ
+nhất trả đủ, kỳ giữa trả một nửa, kỳ mới nhất còn nợ — vì khách thuê không nhìn thấy
+hóa đơn nháp, nên để nguyên nháp thì cổng khách thuê vừa seed sẽ trống trơn. Nó cố ý
+**không** gọi `send()` (một địa chỉ trong dữ liệu seed là hộp thư thật) và chỉ đụng
+vào hóa đơn còn là `draft`, nên chạy lại không đặt lại hóa đơn ai đó đã xử lý tay.
+Chạy lại thì bù thêm dữ liệu còn thiếu. Nhưng nó
 chỉ **tạo** operator, gặp tài khoản đã có thì bỏ qua — sửa tài khoản có sẵn thì dùng
 `scripts/set_admin_password.py` (đổi mật khẩu) hoặc `scripts/set_admin_email.py` (đổi
 email, tìm theo `SEED_ADMIN_USERNAME`). Cả ba đọc secret từ env; xem rule
@@ -171,10 +181,25 @@ Quy trình đầy đủ nằm trong `DEPLOY.md` — đây chỉ là những gì 
 
 `services/email.py` gửi mail qua HTTP API của Resend (`httpx`, port 443) — **không phải
 SMTP**: Render chặn outbound 25/465/587 ở tầng network nên mọi lần gửi qua SMTP đều
-timeout sau 60 giây. **Nếu `RESEND_API_KEY` không được đặt, nó
-ghi log nội dung thay vì gửi thật**, nên không cần mail server để chạy thử các luồng
-có gửi email. `services/scheduler.py` chạy một cron job APScheduler duy nhất, gửi hóa
-đơn nháp hằng tháng; lifespan khởi động và dừng nó để một lần reload không làm chạy
+timeout sau 60 giây. **Thiếu `RESEND_API_KEY` hoặc `EMAIL_FROM` thì nó ghi log nội
+dung thay vì gửi thật** (`settings.email_enabled` cần cả hai), nên không cần mail
+server để chạy thử các luồng có gửi email.
+
+**`EMAIL_FROM` phải thuộc một domain đã xác minh trong Resend**, không phải email bạn
+dùng để đăng ký. Để nguyên giá trị mẫu `@example.com` thì Resend trả 403 kèm
+"domain is not verified" — nhìn ở giao diện chỉ thấy "Không gửi được email", còn lý
+do thật nằm nguyên văn trong log backend. `onboarding@resend.dev` gửi được ngay vì
+Resend tự xác minh sẵn domain đó, nhưng người gửi dùng chung ấy thường chỉ gửi được
+tới chính email tài khoản Resend.
+
+**Nhà cung cấp mail chết không được làm đổ vỡ nghiệp vụ.** Ký hợp đồng ghi hợp đồng,
+trạng thái phòng và tài khoản khách thuê xong rồi mới gửi mail, mà không có transaction
+để hoàn tác — nên `contract_service` nuốt `EmailDeliveryError`, ghi log cảnh báo, và
+vẫn trả về hợp đồng. Khách thuê ở lại trạng thái chưa xác thực, và CMS có nút
+"Gửi lại link" cho đúng những hợp đồng đó.
+
+`services/scheduler.py` chạy một cron job APScheduler duy nhất, gửi hóa đơn nháp hằng
+tháng; lifespan khởi động và dừng nó để một lần reload không làm chạy
 song song hai scheduler trên cùng một database.
 
 Scheduler chỉ chạy khi process còn sống, nên bản deploy trên gói free ngủ giữa các
