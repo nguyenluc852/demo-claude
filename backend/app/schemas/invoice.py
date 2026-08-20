@@ -41,6 +41,26 @@ class InvoiceSchema(BaseModel):
     created_at: datetime
 
 
+class InvoiceSettlement(BaseModel):
+    """What the tenant must actually transfer for one invoice, right now.
+
+    Kept out of `InvoiceSchema` on purpose: that model is a snapshot of one
+    document, while these numbers are derived from several. Folding them in
+    would make every list endpoint compute them N times over.
+
+    The four amounts constrain each other (`amount_due = invoice_due +
+    previous_due`), so they travel together rather than as loose floats a caller
+    could pass in the wrong order.
+    """
+
+    invoice_total: float
+    paid_amount: float
+    invoice_due: float
+    previous_due: float
+    amount_due: float
+    earliest_due_date: datetime | None = None
+
+
 class InvoicePayment(BaseModel):
     paid_amount: float = Field(ge=0, le=Limits.MONEY_MAX)
 

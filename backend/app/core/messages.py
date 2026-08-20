@@ -106,7 +106,15 @@ class EmailTemplate:
     INVOICE_INTRO: Final = (
         "Dưới đây là chi tiết hóa đơn phòng {room_number} cho kỳ {period}."
     )
-    INVOICE_TOTAL_LABEL: Final = "Tổng cộng cần thanh toán"
+    # The headline number is what to transfer, which is not the invoice total
+    # whenever anything was already paid or carried over from an earlier period.
+    INVOICE_AMOUNT_DUE_LABEL: Final = "Số tiền cần chuyển khoản"
+    INVOICE_TOTAL_LABEL: Final = "Tổng hóa đơn kỳ này"
+    INVOICE_PAID_LABEL: Final = "Đã thanh toán"
+    INVOICE_PREVIOUS_DUE_LABEL: Final = "Còn nợ các kỳ trước"
+    INVOICE_CARRY_OVER_NOTE: Final = (
+        "Số tiền cần chuyển khoản đã bao gồm phần chưa thanh toán của các kỳ trước."
+    )
     INVOICE_DUE_LABEL: Final = "Hạn thanh toán"
     INVOICE_BANK_HEADING: Final = "Thông tin chuyển khoản"
     INVOICE_FOOTER: Final = (
@@ -142,5 +150,8 @@ class PdfText:
     PERIOD_LABEL: Final = "Ky"
     TENANT_LABEL: Final = "Khach thue"
     ISSUED_LABEL: Final = "Ngay xuat"
-    TOTAL_LABEL: Final = "TONG CONG"
+    TOTAL_LABEL: Final = "TONG HOA DON KY NAY"
+    PAID_LABEL: Final = "DA THANH TOAN"
+    PREVIOUS_DUE_LABEL: Final = "CON NO KY TRUOC"
+    AMOUNT_DUE_LABEL: Final = "CAN THANH TOAN"
     FILENAME: Final = "invoice-{room_number}-{period}.pdf"

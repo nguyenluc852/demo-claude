@@ -13,7 +13,7 @@ from app.common.exceptions import EmailDeliveryError
 from app.core.config import settings
 from app.core.constants import AuthScheme, Header, Resend, ServiceCode
 from app.core.messages import EmailTemplate
-from app.schemas.invoice import InvoiceLine, InvoiceSchema
+from app.schemas.invoice import InvoiceLine, InvoiceSchema, InvoiceSettlement
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,35 @@ def _meter_rows(invoice: InvoiceSchema) -> str:
     return "".join(rows)
 
 
-def render_invoice_email(invoice: InvoiceSchema) -> str:
+def _settlement_rows(settlement: InvoiceSettlement) -> str:
+    """The breakdown above the headline, shown only when it says something.
+
+    With nothing paid and nothing carried over the headline already equals the
+    invoice total, so the rows would just restate it.
+    """
+    if settlement.previous_due <= 0 and settlement.paid_amount <= 0:
+        return ""
+
+    rows = [(EmailTemplate.INVOICE_TOTAL_LABEL, settlement.invoice_total)]
+    if settlement.paid_amount > 0:
+        rows.append((EmailTemplate.INVOICE_PAID_LABEL, settlement.paid_amount))
+    if settlement.previous_due > 0:
+        rows.append((EmailTemplate.INVOICE_PREVIOUS_DUE_LABEL, settlement.previous_due))
+
+    cells = "".join(
+        f'<tr><td style="{_STYLE_TD}">{label}</td>'
+        f'<td style="{_STYLE_TD_NUM}">{_money(amount)}</td></tr>'
+        for label, amount in rows
+    )
+    note = (
+        f'<div style="{_STYLE_WORK}">{EmailTemplate.INVOICE_CARRY_OVER_NOTE}</div>'
+        if settlement.previous_due > 0
+        else ""
+    )
+    return f'<table style="{_STYLE_TABLE}"><tbody>{cells}</tbody></table>{note}'
+
+
+def render_invoice_email(invoice: InvoiceSchema, settlement: InvoiceSettlement) -> str:
     headers = "".join(
         f'<th style="{_STYLE_TH}">{label}</th>'
         for label in (EmailTemplate.COL_DESCRIPTION, EmailTemplate.COL_AMOUNT)
@@ -191,9 +219,12 @@ def render_invoice_email(invoice: InvoiceSchema) -> str:
         f"<p>{subtitle}</p>"
         f'<table style="{_STYLE_TABLE}"><thead><tr>{headers}</tr></thead>'
         f"<tbody>{_meter_rows(invoice)}</tbody></table>"
+        f"{_settlement_rows(settlement)}"
         f'<div style="{_STYLE_TOTAL}">'
-        f'<div style="color:#0e7490;font-size:13px;">{EmailTemplate.INVOICE_TOTAL_LABEL}</div>'
-        f'<div style="font-size:28px;font-weight:800;color:#0f172a;">{_money(invoice.total)}</div>'
+        f'<div style="color:#0e7490;font-size:13px;">'
+        f"{EmailTemplate.INVOICE_AMOUNT_DUE_LABEL}</div>"
+        f'<div style="font-size:28px;font-weight:800;color:#0f172a;">'
+        f"{_money(settlement.amount_due)}</div>"
         f'<div style="color:#475569;font-size:13px;margin-top:6px;">'
         f"{EmailTemplate.INVOICE_DUE_LABEL}: {invoice.due_date:%d/%m/%Y}</div>"
         f"</div>"

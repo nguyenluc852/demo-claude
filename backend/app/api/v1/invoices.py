@@ -73,8 +73,9 @@ async def update_status(
 @router.get(Route.INVOICE_PDF)
 async def download_pdf(invoice_id: str, _: StaffDep) -> Response:
     invoice = await invoice_service.get(invoice_id)
+    settlement = await invoice_service.settlement_for(invoice)
     return Response(
-        content=render_invoice_pdf(invoice),
+        content=render_invoice_pdf(invoice, settlement),
         media_type=MediaType.PDF,
         headers={
             Header.CONTENT_DISPOSITION: Header.ATTACHMENT_TEMPLATE.format(

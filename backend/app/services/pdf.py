@@ -15,7 +15,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from app.core.constants import ServiceCode
 from app.core.messages import EmailTemplate, PdfText
-from app.schemas.invoice import InvoiceSchema
+from app.schemas.invoice import InvoiceSchema, InvoiceSettlement
 
 _HEADER_BG = colors.HexColor("#0f766e")
 _HEADER_FG = colors.white
@@ -38,7 +38,32 @@ def _number(value: float | None) -> str:
     return "-" if value is None else f"{value:,.0f}"
 
 
-def render_invoice_pdf(invoice: InvoiceSchema) -> bytes:
+def _summary_rows(settlement: InvoiceSettlement) -> list[list[str]]:
+    """The closing rows of the invoice table, as plain strings.
+
+    Split out as a pure function because ReportLab compresses the content
+    stream: the finished bytes cannot be asserted against, but this can.
+
+    With nothing paid and nothing carried over there is exactly one row, as
+    before — the extra lines would only restate the total.
+    """
+    rows = [[_ascii(PdfText.TOTAL_LABEL), "", "", "", "", _money(settlement.invoice_total)]]
+    if settlement.previous_due <= 0 and settlement.paid_amount <= 0:
+        return rows
+
+    if settlement.paid_amount > 0:
+        rows.append([_ascii(PdfText.PAID_LABEL), "", "", "", "", _money(settlement.paid_amount)])
+    if settlement.previous_due > 0:
+        rows.append(
+            [_ascii(PdfText.PREVIOUS_DUE_LABEL), "", "", "", "", _money(settlement.previous_due)]
+        )
+    rows.append(
+        [_ascii(PdfText.AMOUNT_DUE_LABEL), "", "", "", "", _money(settlement.amount_due)]
+    )
+    return rows
+
+
+def render_invoice_pdf(invoice: InvoiceSchema, settlement: InvoiceSettlement) -> bytes:
     buffer = BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -104,7 +129,7 @@ def render_invoice_pdf(invoice: InvoiceSchema) -> bytes:
                 _money(line.amount),
             ]
         )
-    rows.append([_ascii(PdfText.TOTAL_LABEL), "", "", "", "", _money(invoice.total)])
+    rows.extend(_summary_rows(settlement))
 
     table = Table(rows, colWidths=[52 * mm, 22 * mm, 22 * mm, 22 * mm, 26 * mm, 30 * mm])
     table.setStyle(

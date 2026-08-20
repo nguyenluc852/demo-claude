@@ -29,12 +29,28 @@ from app.core.constants import (
 )
 from app.core.messages import EmailTemplate, ErrorMessage
 from app.db.mongo import get_collection
-from app.schemas.invoice import InvoiceDispatchResult, InvoiceLine, InvoiceSchema
+from app.schemas.invoice import (
+    InvoiceDispatchResult,
+    InvoiceLine,
+    InvoiceSchema,
+    InvoiceSettlement,
+)
 from app.schemas.tenant import TenantBalance
 from app.services.email import render_invoice_email, send_email
 from app.services.service_setting import service_setting_service
 
 logger = logging.getLogger(__name__)
+
+
+# `list` is a method on this service, and inside a class body that name shadows
+# the builtin for every annotation written after it. Spell the return type out
+# here, where `list` still means the builtin.
+InvoiceDocuments = list[dict[str, Any]]
+
+
+def _remaining(doc: dict[str, Any]) -> float:
+    """What is still owed on one invoice document."""
+    return max(float(doc[Field.TOTAL]) - float(doc.get(Field.PAID_AMOUNT, 0.0)), 0.0)
 
 
 def _fixed_quantity(unit: str, occupants: int) -> float:
@@ -187,6 +203,45 @@ class InvoiceService:
     async def get(self, invoice_id: str) -> InvoiceSchema:
         return await self._decorate(await self.get_document(invoice_id))
 
+    async def _outstanding_documents(
+        self, contract_id: str, before_period: str | None = None
+    ) -> InvoiceDocuments:
+        """Issued-but-unsettled invoices for a contract, newest period first."""
+        query: dict[str, Any] = {
+            Field.CONTRACT_ID: contract_id,
+            Field.STATUS: {"$in": list(InvoiceStatus.OUTSTANDING)},
+        }
+        if before_period is not None:
+            query[Field.PERIOD] = {"$lt": before_period}
+        cursor = self._collection.find(query).sort(Field.PERIOD, -1)
+        return [doc async for doc in cursor]
+
+    async def settlement_for(self, invoice: InvoiceSchema) -> InvoiceSettlement:
+        """What to actually transfer for this invoice, arrears included.
+
+        Earlier periods are selected by comparing `period`, not by excluding this
+        invoice's id. That keeps the answer identical whether the invoice is
+        still a draft being sent for the first time or an unpaid one being
+        resent — `send()` mails before it flips the status, so an id-based rule
+        would depend on that ordering. It also stops a *later* period's debt from
+        being reported as arrears when staff resend an older invoice.
+        """
+        documents = await self._outstanding_documents(
+            invoice.contract_id, before_period=invoice.period
+        )
+        previous_due = sum(_remaining(doc) for doc in documents)
+        invoice_due = max(invoice.total - invoice.paid_amount, 0.0)
+        due_dates = [doc[Field.DUE_DATE] for doc in documents if doc.get(Field.DUE_DATE)]
+
+        return InvoiceSettlement(
+            invoice_total=to_vnd(invoice.total),
+            paid_amount=to_vnd(invoice.paid_amount),
+            invoice_due=to_vnd(invoice_due),
+            previous_due=to_vnd(previous_due),
+            amount_due=to_vnd(invoice_due + previous_due),
+            earliest_due_date=min(due_dates) if due_dates else None,
+        )
+
     async def balance_for(self, contract_id: str) -> TenantBalance:
         """Sum what a contract still owes across every issued invoice.
 
@@ -194,13 +249,7 @@ class InvoiceService:
         paginated: adding up one page would quietly under-report a tenant who
         has been here longer than a page.
         """
-        cursor = self._collection.find(
-            {
-                Field.CONTRACT_ID: contract_id,
-                Field.STATUS: {"$in": list(InvoiceStatus.OUTSTANDING)},
-            }
-        ).sort(Field.PERIOD, -1)
-        documents = [doc async for doc in cursor]
+        documents = await self._outstanding_documents(contract_id)
 
         if not documents:
             return TenantBalance(
@@ -210,14 +259,11 @@ class InvoiceService:
                 unpaid_count=0,
             )
 
-        def remaining(doc: dict[str, Any]) -> float:
-            return max(float(doc[Field.TOTAL]) - float(doc.get(Field.PAID_AMOUNT, 0.0)), 0.0)
-
         # Sorted newest first, so the head is the period being billed now and the
         # tail is whatever was left unsettled before it.
         newest = documents[0]
-        current_due = remaining(newest)
-        previous_due = sum(remaining(doc) for doc in documents[1:])
+        current_due = _remaining(newest)
+        previous_due = sum(_remaining(doc) for doc in documents[1:])
 
         due_dates = [doc[Field.DUE_DATE] for doc in documents if doc.get(Field.DUE_DATE)]
 
@@ -244,12 +290,13 @@ class InvoiceService:
         if not invoice.tenant_email:
             raise BadRequestError(ErrorMessage.INVOICE_NO_EMAIL)
 
+        settlement = await self.settlement_for(invoice)
         await send_email(
             invoice.tenant_email,
             EmailTemplate.INVOICE_SUBJECT.format(
                 room_number=invoice.room_number or "", period=invoice.period
             ),
-            render_invoice_email(invoice),
+            render_invoice_email(invoice, settlement),
         )
 
         changes: dict[str, Any] = {"sent_at": datetime.now(UTC)}
