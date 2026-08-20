@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from app.common.deps import PaginationDep, TenantDep
 from app.common.exceptions import NotFoundError
 from app.common.schemas import DataResponse, PageMeta, PageResponse
-from app.core.constants import Route, Tag
+from app.core.constants import InvoiceStatus, Route, Tag
 from app.core.messages import ErrorMessage
 from app.schemas.invoice import InvoiceSchema
 from app.schemas.tenant import TenantOverview
@@ -34,7 +34,10 @@ async def my_invoices(
     pagination: PaginationDep, user: TenantDep
 ) -> PageResponse[InvoiceSchema]:
     invoices, total = await invoice_service.list(
-        pagination.offset, pagination.size, contract_id=_contract_id(user.contract_id)
+        pagination.offset,
+        pagination.size,
+        contract_id=_contract_id(user.contract_id),
+        statuses=InvoiceStatus.TENANT_VISIBLE,
     )
     return PageResponse(
         data=invoices,

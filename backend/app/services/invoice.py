@@ -162,10 +162,13 @@ class InvoiceService:
         status: str | None = None,
         period: str | None = None,
         contract_id: str | None = None,
+        statuses: tuple[str, ...] | None = None,
     ) -> tuple[list[InvoiceSchema], int]:
         query: dict[str, Any] = {}
         if status:
             query[Field.STATUS] = status
+        elif statuses:
+            query[Field.STATUS] = {"$in": list(statuses)}
         if period:
             query[Field.PERIOD] = period
         if contract_id:

@@ -23,6 +23,10 @@ coi mọi chỉnh sửa ở đây là quyết định về sản phẩm, không 
 - **Gửi lại hóa đơn không bao giờ ghi đè trạng thái thanh toán.** Gửi lần đầu chuyển
   hóa đơn nháp sang `unpaid`; gửi lại một hóa đơn đã trả một phần hoặc đã trả đủ thì
   giữ nguyên trạng thái đó.
+- **Cổng khách thuê không bao giờ thấy hóa đơn `draft`.** Nháp là hóa đơn chưa phát
+  hành: lưu lại chỉ số sẽ tính lại chính nó, nên hiện ra là báo cho khách một con số
+  còn được phép đổi. `InvoiceStatus.TENANT_VISIBLE` chốt danh sách trạng thái được
+  phép; thêm trạng thái mới thì phải quyết định nó có nằm trong đó không.
 - **Trạng thái hợp đồng được suy ra theo thời gian lúc đọc** (`derive_status`), không
   lưu sẵn, nên "sắp hết hạn trong 30 ngày" luôn đúng tại thời điểm xem.
 

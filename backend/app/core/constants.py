@@ -165,6 +165,10 @@ class InvoiceStatus:
     ALL: Final = (DRAFT, SENT, UNPAID, PARTIALLY_PAID, PAID)
     # Statuses whose payment state a resend must not overwrite.
     PAYMENT_LOCKED: Final = (PARTIALLY_PAID, PAID, UNPAID)
+    # What the tenant portal may show. A draft is not issued yet: staff can still
+    # recalculate it by re-saving the period's meters, so showing it would quote the
+    # tenant an amount that is allowed to change underneath them.
+    TENANT_VISIBLE: Final = (SENT, UNPAID, PARTIALLY_PAID, PAID)
 
 
 class LeadStatus:
