@@ -8,7 +8,7 @@ applies-to: frontend/src/index.css, frontend/src/components/**, frontend/src/pag
 
 `frontend/src/index.css` chứa toàn bộ hệ thống; **không có CSS-in-JS và không có
 utility framework**. Đọc phần chú thích ở đầu file đó trước khi đổi bất cứ thứ gì về
-hình ảnh. Với việc thiết kế ở quy mô lớn hơn, hãy nạp skill `frontend-design`.
+hình ảnh. Với việc thiết kế ở quy mô lớn hơn, hãy nạp skill `frontend` và đọc Phần B.
 
 Định hướng là **sáng và thoáng**: nền trắng ngà, panel cam pastel, một màu nhấn cam
 duy nhất. Không gian được chia bằng **panel bo góc và bóng mềm**, không phải đường kẻ

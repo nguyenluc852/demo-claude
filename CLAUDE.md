@@ -34,12 +34,16 @@ Hai app nối với nhau bằng proxy, không phải CORS — xem rule `api-cont
 
 ## Skills
 
-Ba skill trong `.claude/skills/` chứa quy trình chi tiết từng bước. Nạp skill phù hợp
+Hai skill trong `.claude/skills/` chứa quy trình chi tiết từng bước. Nạp skill phù hợp
 trước khi viết code:
 
 - **`backend-endpoint`** — mọi route, schema, service, hoặc lỗi API của FastAPI.
-- **`frontend-feature`** — mọi component, page, Redux slice, hoặc text hiển thị.
-- **`frontend-design`** — mọi việc liên quan hình ảnh: bảng màu, chữ, bố cục, màn hình mới.
+- **`frontend`** — mọi component, page, Redux slice, text hiển thị, **và** mọi quyết
+  định hình ảnh: bảng màu, chữ, bố cục, màn hình mới.
+
+`frontend` chia làm hai phần: Phần A là thi công (tầng atomic, Redux, hằng số), Phần B
+là thiết kế hình ảnh. Sửa một component có sẵn thì chỉ cần Phần A; dựng màn hình mới
+hoặc làm lại giao diện thì đọc cả hai.
 
 ## Agents
 
