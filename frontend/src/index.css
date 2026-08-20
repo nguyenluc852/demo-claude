@@ -43,6 +43,13 @@
   --sage-050: #eaf6ef;
   --sand-600: #96690e;
 
+  /* Data encoding, not a third accent: the two metered series are read side by
+     side in the tenant's usage chart, so they need hues a person can tell apart
+     at a glance. Electricity borrows the accent; water gets this. Kept muted so
+     it never competes for attention the way --orange-600 is meant to, and it is
+     never used for a control, a state, or text. */
+  --water-600: #2e7d9a;
+
   /* Room status — mandated by the spec. */
   --status-available: #16a34a;
   --status-occupied: #dc2626;

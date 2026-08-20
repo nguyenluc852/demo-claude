@@ -25,7 +25,7 @@ import type { UsagePoint } from "../molecules";
 /* The two series read their colour from the palette rather than carrying a hex:
    the accent for electricity, the support green for water. */
 const COLOR_ELECTRIC = "var(--orange-600)";
-const COLOR_WATER = "var(--sage-600)";
+const COLOR_WATER = "var(--water-600)";
 
 const SERIES_OPTIONS = [
   [SERVICE_CODE.electricity, STRINGS.meter.columnElectric],

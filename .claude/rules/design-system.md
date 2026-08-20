@@ -27,9 +27,17 @@ Bo góc rộng tay và nút bo tròn hoàn toàn thành viên thuốc. Nhưng co
   đang bảo trì, tím đang nợ). **Thêm màu nhấn thứ ba là một bước lùi.**
   `--sage-*` và `--sand-*` là màu phụ trợ rất nhạt cho xác nhận và cảnh báo, không
   phải màu nhấn — đừng nâng chúng lên thành nhân vật chính.
-- Nhóm token màu: `--slate-*` (thang trung tính ấm), `--orange-*`
-  (nhấn), `--status-*` (SRS chốt). Toàn bộ token chỉ được dùng trong `index.css`;
-  **không component nào đọc token màu trực tiếp.**
+- **`--water-600` là màu mã hóa dữ liệu, không phải ngoại lệ của quy tắc trên.**
+  Biểu đồ mức sử dụng vẽ điện và nước cạnh nhau, nên hai chuỗi buộc phải phân biệt
+  được bằng màu; điện mượn màu nhấn, nước lấy token này. Nó chỉ được dùng làm màu
+  chuỗi dữ liệu — không cho control, không cho trạng thái, không cho chữ. Cần thêm
+  một chuỗi dữ liệu nữa thì thêm token cùng nhóm này, đừng với tay lấy `--sage-*`.
+- Nhóm token màu: `--slate-*` (thang trung tính ấm), `--orange-*` (nhấn),
+  `--status-*` (SRS chốt), `--water-600` (mã hóa dữ liệu). Toàn bộ token chỉ được
+  dùng trong `index.css`; **không component nào đọc token màu trực tiếp.**
+  Ngoại lệ duy nhất là biểu đồ: recharts nhận màu bằng giá trị JS chứ không qua
+  class, nên `RevenueChart` và `TenantPortal` khai `'var(--token)'` thành hằng ở
+  đầu file. Vẫn là token, chỉ là đi đường khác — đừng viết hex vào component.
 - Vai trò của chữ: `--font-display` (Bricolage Grotesque, tiêu đề), `--font-body`
   (Be Vietnam Pro — chọn vì nó đặt dấu tiếng Việt đúng), và `--font-mono`
   (IBM Plex Mono, dữ liệu).
