@@ -4,9 +4,11 @@ import type { FormEvent } from 'react'
 import { PAYMENT_CYCLE, ROOM_STATUS, SLICE, STATUS, STRINGS } from '../../constants'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
+  clearNotice,
   createContract,
   deleteContract,
   fetchContracts,
+  resendVerification,
   updateContract,
 } from '../../store/slices/contractsSlice'
 import { fetchRooms } from '../../store/slices/roomsSlice'
@@ -68,7 +70,7 @@ function toIso(date: string): string {
 
 export function ContractManager() {
   const dispatch = useAppDispatch()
-  const { entities, status, submitting, error } = useAppSelector(
+  const { entities, status, submitting, resendingIds, notice, error } = useAppSelector(
     (state) => state[SLICE.contracts],
   )
   const rooms = useAppSelector((state) => state[SLICE.rooms].entities)
@@ -147,6 +149,14 @@ export function ContractManager() {
       </div>
 
       {error && !open ? <Notice message={error} tone="danger" /> : null}
+      {notice ? (
+        <p className="notice" data-tone="success" role="status">
+          {notice}{' '}
+          <Button size="sm" variant="ghost" onClick={() => dispatch(clearNotice())}>
+            {STRINGS.common.close}
+          </Button>
+        </p>
+      ) : null}
       {status === STATUS.loading ? <Spinner label={STRINGS.common.loading} /> : null}
 
       {status === STATUS.succeeded && entities.length === 0 ? (
@@ -187,6 +197,26 @@ export function ContractManager() {
                         }
                         tone={contract.email_verified ? 'positive' : 'warning'}
                       />
+                      {/* Signing no longer fails when the provider refuses the
+                          link, so this is how it gets sent again. */}
+                      {contract.email_verified ? null : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          loading={resendingIds.includes(contract.id)}
+                          loadingLabel={STRINGS.contract.resendingVerification}
+                          onClick={() =>
+                            void dispatch(
+                              resendVerification({
+                                id: contract.id,
+                                email: contract.tenant_email,
+                              }),
+                            )
+                          }
+                        >
+                          {STRINGS.contract.resendVerificationAction}
+                        </Button>
+                      )}
                     </div>
                   </td>
                   <td className="num" data-label={STRINGS.contract.endLabel}>

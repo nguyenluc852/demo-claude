@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
-import { contractsApi } from '../../api/endpoints'
+import { authApi, contractsApi } from '../../api/endpoints'
 import { SLICE, STATUS, STRINGS } from '../../constants'
 import type { RequestStatus } from '../../types/api'
 import type { Contract, ContractInput, ContractUpdate } from '../../types/models'
@@ -9,6 +9,9 @@ interface ContractsState {
   entities: Contract[]
   status: RequestStatus
   submitting: boolean
+  /** One id per row in flight: resending for one contract must not lock the grid. */
+  resendingIds: string[]
+  notice: string | null
   error: string | null
 }
 
@@ -16,6 +19,8 @@ const initialState: ContractsState = {
   entities: [],
   status: STATUS.idle,
   submitting: false,
+  resendingIds: [],
+  notice: null,
   error: null,
 }
 
@@ -43,12 +48,25 @@ export const deleteContract = createAsyncThunk(
   },
 )
 
+/** Sends the verification link again — the only way back when the provider
+ *  refused it at signing time. */
+export const resendVerification = createAsyncThunk(
+  `${SLICE.contracts}/resendVerification`,
+  async ({ id, email }: { id: string; email: string }) => {
+    await authApi.resendVerification(email)
+    return id
+  },
+)
+
 const contractsSlice = createSlice({
   name: SLICE.contracts,
   initialState,
   reducers: {
     clearError: (state) => {
       state.error = null
+    },
+    clearNotice: (state) => {
+      state.notice = null
     },
   },
   extraReducers: (builder) => {
@@ -79,6 +97,21 @@ const contractsSlice = createSlice({
         state.submitting = false
         state.entities = state.entities.filter((contract) => contract.id !== action.payload)
       })
+      // Resending is tracked per row, not by `submitting`: it belongs to one
+      // contract and must leave the rest of the grid usable.
+      .addCase(resendVerification.pending, (state, action) => {
+        state.resendingIds.push(action.meta.arg.id)
+        state.error = null
+        state.notice = null
+      })
+      .addCase(resendVerification.fulfilled, (state, action) => {
+        state.resendingIds = state.resendingIds.filter((id) => id !== action.payload)
+        state.notice = STRINGS.contract.verificationResent
+      })
+      .addCase(resendVerification.rejected, (state, action) => {
+        state.resendingIds = state.resendingIds.filter((id) => id !== action.meta.arg.id)
+        state.error = action.error.message ?? STRINGS.errors.generic
+      })
 
     for (const thunk of [createContract, updateContract, deleteContract]) {
       builder
@@ -94,5 +127,5 @@ const contractsSlice = createSlice({
   },
 })
 
-export const { clearError } = contractsSlice.actions
+export const { clearError, clearNotice } = contractsSlice.actions
 export default contractsSlice.reducer
