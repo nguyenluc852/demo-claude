@@ -1824,11 +1824,4 @@ tbody tr:hover {
   .invoice-total b {
     font-size: 1.2rem;
   }
-
-  /* recharts sizes its wrapper from a measurement, so between a rotation and
-     the next observer tick the old width can be wider than the card. Capping it
-     means the card never gets stretched by the lag. */
-  .recharts-wrapper {
-    max-width: 100%;
-  }
 }
