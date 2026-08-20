@@ -26,8 +26,13 @@ _STYLE_CARD = (
     "overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.12);"
 )
 _STYLE_HEADER = (
-    "padding:28px 32px;color:#ffffff;"
-    "background:linear-gradient(135deg,#0f766e 0%,#0891b2 55%,#6366f1 100%);"
+    # Warm header to match the app. The solid colour is declared first as a
+    # fallback: several mail clients drop background-image entirely, and a
+    # header that falls back to transparent would leave dark text on white
+    # with no band at all.
+    "padding:28px 32px;color:#23190f;"
+    "background:#fde4cf;"
+    "background:linear-gradient(135deg,#f8c9a1 0%,#fde4cf 45%,#ffffff 100%);"
 )
 _STYLE_BODY = "padding:28px 32px;"
 _STYLE_TABLE = "width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;"
@@ -47,8 +52,14 @@ _STYLE_BANK = (
     "background:#fffbeb;border:1px solid #fde68a;font-size:14px;"
 )
 _STYLE_BUTTON = (
-    "display:inline-block;padding:13px 26px;border-radius:10px;background:#0891b2;"
-    "color:#ffffff;text-decoration:none;font-weight:600;"
+    # Dark label on a pale wash, never white: white on this orange family
+    # reads about 2.3:1. The border is what keeps it looking like a control
+    # once the gradient lands on an almost-white card.
+    "display:inline-block;padding:13px 26px;border-radius:10px;"
+    "background:#f8c9a1;"
+    "background:linear-gradient(135deg,#f8c9a1 0%,#fdf3ea 100%);"
+    "border:1px solid #ef944f;"
+    "color:#23190f;text-decoration:none;font-weight:600;"
 )
 _STYLE_FOOTER = "padding:18px 32px;background:#f8fafc;color:#64748b;font-size:12px;"
 
