@@ -43,7 +43,7 @@ trước khi viết code:
 
 ## Agents
 
-Hai subagent trong `.claude/agents/`, đều chạy Opus. Giao việc cho chúng thay vì tự
+Ba subagent trong `.claude/agents/`, đều chạy Opus. Giao việc cho chúng thay vì tự
 làm trong context chính — tool output của subagent không đổ vào context chính, chỉ báo
 cáo cuối cùng mới quay về.
 
@@ -51,10 +51,12 @@ cáo cuối cùng mới quay về.
 |---|---|---|
 | `researcher` | Câu hỏi phải quét nhiều file: luồng dữ liệu, code nằm ở đâu, đánh giá tác động trước khi sửa | Chỉ đọc |
 | `testing` | Viết / chạy / sửa test, `make check`, xử lý lỗi lint và typecheck | Đọc + sửa file + chạy lệnh |
+| `code-reviewer` | Soát một diff trước khi commit hoặc push: lỗi đúng/sai, vi phạm rule, lỗ bảo mật | Chỉ đọc |
 
 `researcher` chạy theo quy trình 5 bước và trả báo cáo dưới 400 từ theo khuôn cố định.
 `testing` nuốt phần output ồn của pytest/vitest và chỉ trả về kết quả cùng danh sách
-thay đổi.
+thay đổi. `code-reviewer` chỉ nhìn phần diff đổi, xếp phát hiện theo ba mức
+Chặn / Nên sửa / Gợi ý, và không tự sửa gì — nó mô tả, người khác quyết định.
 
 Không giao cho `researcher` khi đã biết chính xác file cần sửa — lúc đó đọc thẳng
 nhanh hơn.
@@ -141,6 +143,51 @@ frontend build thành static asset và phục vụ bởi nginx ở :80, nginx c�
 
 Cả hai Dockerfile đều multi-stage với target `dev` và `prod`; compose chọn target,
 nên đừng bao giờ thêm Dockerfile thứ ba.
+
+## Git workflow
+
+Hai nhánh sống mãi, và mỗi nhánh mang một nghĩa khác nhau:
+
+| Nhánh | Nghĩa | Ai push vào |
+|---|---|---|
+| `develop` | Nhánh làm việc mặc định. Mọi thay đổi đi vào đây trước. | nhánh tính năng merge về |
+| `main` | Cái đang chạy production. | chỉ `develop`, và chỉ khi release |
+
+**Merge vào `main` chính là lệnh deploy production** — `.github/workflows/deploy.yml`
+chạy khi có push vào `main`. Vì vậy đừng commit thẳng vào `main` và đừng mở PR nhắm
+vào `main` trừ khi người dùng nói rõ là đang release. `ci.yml` bỏ qua `main`
+(`branches-ignore`) vì `deploy.yml` đã chạy cùng bộ kiểm tra đó rồi.
+
+### Nhánh tính năng
+
+Tách từ `develop`, merge ngược về `develop`, không bao giờ merge thẳng lên `main`.
+Tiền tố theo loại việc — repo đang dùng `feat/`, `docs/`, `ci/`, `security/`, và
+`fix/`:
+
+```bash
+git checkout develop && git pull
+git checkout -b feat/ten-tinh-nang
+# ... làm việc, commit ...
+git checkout develop && git merge feat/ten-tinh-nang
+```
+
+Thay đổi nhỏ, gọn trong một commit thì commit thẳng lên `develop` cũng được — không
+cần dựng nhánh cho một dòng sửa.
+
+### Release
+
+Chỉ khi người dùng yêu cầu: `develop` → `main`, rồi `deploy.yml` tự đẩy frontend lên
+Vercel và backend lên Render. `deploy.yml` bỏ qua `**.md` và `.claude/**`, nên thay đổi
+thuần tài liệu vào `main` sẽ không nổ một lần deploy.
+
+### Commit
+
+- **Message viết bằng tiếng Việt**, mô tả *thay đổi gì và vì sao*, không dùng tiền tố
+  kiểu Conventional Commits: "Bỏ default của EMAIL_FROM, thiếu nửa cấu hình thì không
+  gửi".
+- Chạy `make check` trước khi commit code (không cần nếu chỉ sửa tài liệu).
+- Giao cho `code-reviewer` soát diff trước khi commit — xem mục Agents ở trên.
+- Không bao giờ commit `.env` hay secret; xem rule `secrets-from-env`.
 
 ## Deploy
 
