@@ -500,6 +500,17 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
+/* Prose values — a name, an email — are not column data, so they take the body
+   font and are allowed to wrap. Without this an address longer than the tile
+   is simply clipped. */
+.stat-value[data-variant='text'] {
+  font-family: var(--font-body);
+  font-variant-numeric: normal;
+  letter-spacing: normal;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 /* --- The room board: the signature element ---------------------------- */
 
 .room-board {
