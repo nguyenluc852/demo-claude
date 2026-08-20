@@ -1,5 +1,6 @@
 """The visitor-facing surface, the tenant portal, and the dashboard aggregates."""
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -19,7 +20,13 @@ from tests.conftest import API
 from tests.factories import create_contract, create_room, save_reading
 
 PERIOD = "2026-08"
+EARLIER_PERIOD = "2026-07"
 EXPECTED_TOTAL = 4_005_000
+PART_PAYMENT = 1_000_000
+# Deliberately the older period's, so a balance that reports the newest invoice's
+# due date instead of the earliest one fails.
+EARLIEST_DUE = datetime(2026, 8, 5, tzinfo=UTC)
+LATEST_DUE = datetime(2026, 9, 5, tzinfo=UTC)
 
 
 def test_homepage_lists_rooms_without_a_token(
@@ -188,6 +195,183 @@ def test_tenant_keeps_seeing_partially_paid_and_paid_invoices(
         listed = client.get(f"{API}{Route.TENANT_INVOICES}", headers=headers).json()
         assert listed["meta"]["total"] == 1
         assert listed["data"][0][Field.STATUS] == expected
+
+
+def _tenant_headers(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> dict[str, str]:
+    token = _verified_tenant_token(client, auth, mongo_database)
+    return {Header.AUTHORIZATION: f"{AuthScheme.BEARER} {token}"}
+
+
+def _invoice_for(
+    client: TestClient, auth: dict[str, str], period: str, room_number: str = "101"
+) -> dict[str, Any]:
+    listed = client.get(f"{API}{Route.INVOICES}", headers=auth).json()["data"]
+    return next(
+        row
+        for row in listed
+        if row[Field.PERIOD] == period and row[Field.ROOM_NUMBER] == room_number
+    )
+
+
+def _send(client: TestClient, auth: dict[str, str], invoice: dict[str, Any]) -> None:
+    response = client.post(
+        f"{API}{Route.INVOICE_SEND.format(invoice_id=invoice['id'])}", headers=auth
+    )
+    assert response.status_code == 200, response.text
+
+
+def _pay(
+    client: TestClient, auth: dict[str, str], invoice: dict[str, Any], amount: float
+) -> dict[str, Any]:
+    response = client.patch(
+        f"{API}{Route.INVOICE_PAYMENT.format(invoice_id=invoice['id'])}",
+        json={"paid_amount": amount},
+        headers=auth,
+    )
+    assert response.status_code == 200, response.text
+    paid: dict[str, Any] = response.json()["data"]
+    return paid
+
+
+def _two_period_tenant(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> tuple[dict[str, str], dict[str, Any], dict[str, Any]]:
+    """A verified tenant billed for two periods, oldest returned first.
+
+    The earlier period is added after the later one on purpose: the balance must
+    order by period, not by the order the invoices happened to be written in.
+    """
+    headers = _tenant_headers(client, auth, mongo_database)
+    newest = _invoice_for(client, auth, PERIOD)
+    save_reading(client, auth, newest[Field.ROOM_ID], EARLIER_PERIOD, 100, 8)
+    oldest = _invoice_for(client, auth, EARLIER_PERIOD)
+    return headers, oldest, newest
+
+
+def _set_due_dates(mongo_database: Any, room_id: str) -> None:
+    invoices = mongo_database[Collection.INVOICES]
+    for period, due in ((EARLIER_PERIOD, EARLIEST_DUE), (PERIOD, LATEST_DUE)):
+        invoices.update_one(
+            {Field.ROOM_ID: room_id, Field.PERIOD: period},
+            {"$set": {Field.DUE_DATE: due}},
+        )
+
+
+def _balance(client: TestClient, headers: dict[str, str]) -> dict[str, Any]:
+    response = client.get(f"{API}{Route.TENANT_ME}", headers=headers)
+    assert response.status_code == 200, response.text
+    balance: dict[str, Any] = response.json()["data"]["balance"]
+    return balance
+
+
+def test_balance_splits_a_part_paid_older_invoice_from_the_current_one(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    """The case the split exists for: previous_due is the remainder, not the total.
+
+    An older invoice that was half settled still owes the difference; summing its
+    full amount would over-report, and dropping it would under-report.
+    """
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+    _send(client, auth, oldest)
+    _send(client, auth, newest)
+
+    paid = _pay(client, auth, oldest, PART_PAYMENT)
+    assert paid[Field.STATUS] == InvoiceStatus.PARTIALLY_PAID
+
+    remaining = oldest[Field.TOTAL] - PART_PAYMENT
+    balance = _balance(client, headers)
+    assert balance["current_due"] == newest[Field.TOTAL]
+    assert balance["previous_due"] == remaining
+    assert balance["outstanding"] == newest[Field.TOTAL] + remaining
+    assert balance["current_period"] == PERIOD
+    assert balance["unpaid_count"] == 2
+
+
+def test_balance_leaves_out_a_fully_paid_invoice(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+    _send(client, auth, oldest)
+    _send(client, auth, newest)
+
+    paid = _pay(client, auth, oldest, oldest[Field.TOTAL])
+    assert paid[Field.STATUS] == InvoiceStatus.PAID
+
+    balance = _balance(client, headers)
+    assert balance["outstanding"] == newest[Field.TOTAL]
+    assert balance["current_due"] == newest[Field.TOTAL]
+    assert balance["previous_due"] == 0
+    assert balance["unpaid_count"] == 1
+
+
+def test_balance_leaves_out_a_draft_invoice(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    """A draft is not issued, so it is not owed — same rule as the invoice list."""
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+    _send(client, auth, newest)
+    assert _invoice_for(client, auth, EARLIER_PERIOD)[Field.STATUS] == InvoiceStatus.DRAFT
+
+    balance = _balance(client, headers)
+    assert balance["outstanding"] == newest[Field.TOTAL]
+    assert balance["previous_due"] == 0
+    assert balance["unpaid_count"] == 1
+    assert oldest[Field.TOTAL] > 0  # the draft had a real amount and was still skipped
+
+
+def test_balance_is_empty_when_nothing_is_owed(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+    for invoice in (oldest, newest):
+        _send(client, auth, invoice)
+        _pay(client, auth, invoice, invoice[Field.TOTAL])
+
+    balance = _balance(client, headers)
+    assert balance["outstanding"] == 0
+    assert balance["current_due"] == 0
+    assert balance["previous_due"] == 0
+    assert balance["unpaid_count"] == 0
+    assert balance[Field.DUE_DATE] is None
+    assert balance["current_period"] is None
+
+
+def test_balance_reports_the_earliest_due_date_not_the_newest_periods(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+    _send(client, auth, oldest)
+    _send(client, auth, newest)
+    _set_due_dates(mongo_database, newest[Field.ROOM_ID])
+
+    due = datetime.fromisoformat(_balance(client, headers)[Field.DUE_DATE])
+    assert due.replace(tzinfo=UTC) == EARLIEST_DUE
+
+
+def test_balance_counts_only_the_tenants_own_contract(
+    client: TestClient, auth: dict[str, str], mongo_database: Any
+) -> None:
+    headers, oldest, newest = _two_period_tenant(client, auth, mongo_database)
+
+    neighbour = create_room(client, auth, room_number="102")
+    create_contract(
+        client,
+        auth,
+        neighbour["id"],
+        tenant_email="other@example.com",
+        tenant_phone="0987654321",
+    )
+    save_reading(client, auth, neighbour["id"], PERIOD, 200, 20)
+
+    for invoice in client.get(f"{API}{Route.INVOICES}", headers=auth).json()["data"]:
+        _send(client, auth, invoice)
+
+    balance = _balance(client, headers)
+    assert balance["unpaid_count"] == 2
+    assert balance["outstanding"] == oldest[Field.TOTAL] + newest[Field.TOTAL]
 
 
 def test_staff_invoice_list_still_shows_drafts(

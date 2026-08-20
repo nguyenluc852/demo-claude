@@ -117,6 +117,7 @@ class Field:
     VERIFICATION_TOKEN: Final = "verification_token"
     TOTAL: Final = "total"
     PAID_AMOUNT: Final = "paid_amount"
+    DUE_DATE: Final = "due_date"
 
 
 class UserRole:
@@ -169,6 +170,9 @@ class InvoiceStatus:
     # recalculate it by re-saving the period's meters, so showing it would quote the
     # tenant an amount that is allowed to change underneath them.
     TENANT_VISIBLE: Final = (SENT, UNPAID, PARTIALLY_PAID, PAID)
+    # Issued but not settled. A partially paid invoice belongs here: the balance
+    # left on it is still owed, which is exactly what a resend must not reset.
+    OUTSTANDING: Final = (SENT, UNPAID, PARTIALLY_PAID)
 
 
 class LeadStatus:

@@ -24,9 +24,11 @@ def _contract_id(user_contract_id: str | None) -> str:
 
 @router.get(Route.TENANT_ME, response_model=DataResponse[TenantOverview])
 async def my_overview(user: TenantDep) -> DataResponse[TenantOverview]:
-    contract = await contract_service.get(_contract_id(user.contract_id))
+    contract_id = _contract_id(user.contract_id)
+    contract = await contract_service.get(contract_id)
     room = await room_service.get(contract.room_id)
-    return DataResponse(data=TenantOverview(contract=contract, room=room))
+    balance = await invoice_service.balance_for(contract_id)
+    return DataResponse(data=TenantOverview(contract=contract, room=room, balance=balance))
 
 
 @router.get(Route.TENANT_INVOICES, response_model=PageResponse[InvoiceSchema])

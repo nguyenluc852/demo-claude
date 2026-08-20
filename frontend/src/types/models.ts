@@ -244,7 +244,17 @@ export interface RevenueSeries {
   total_collected: number
 }
 
+export interface TenantBalance {
+  outstanding: number
+  current_due: number
+  previous_due: number
+  current_period: string | null
+  due_date: string | null
+  unpaid_count: number
+}
+
 export interface TenantOverview {
   contract: Contract
   room: Room
+  balance: TenantBalance
 }

@@ -10,7 +10,7 @@ import {
   STRINGS,
 } from '../../constants'
 import { renderWithStore } from '../../test/utils'
-import type { Contract, Room } from '../../types/models'
+import type { Contract, Room, TenantBalance } from '../../types/models'
 import { formatDate, formatMoney } from '../../utils/format'
 import {
   contractStatusLabel,
@@ -60,10 +60,22 @@ const contract: Contract = {
 const NOTE = 'Đã bàn giao 2 chìa khoá'
 const contractWithNote: Contract = { ...contract, note: NOTE }
 
+/** The overview envelope always carries a balance; this screen just ignores it. */
+const balance: TenantBalance = {
+  outstanding: 0,
+  current_due: 0,
+  previous_due: 0,
+  current_period: null,
+  due_date: null,
+  unpaid_count: 0,
+}
+
 function stubTenantApi(activeContract: Contract) {
   const fetchMock = vi.fn((input: string) => {
     if (input.endsWith(API_ROUTES.tenantMe)) {
-      return Promise.resolve(Response.json({ data: { contract: activeContract, room } }))
+      return Promise.resolve(
+        Response.json({ data: { contract: activeContract, room, balance } }),
+      )
     }
     throw new Error(`Unexpected request: ${input}`)
   })

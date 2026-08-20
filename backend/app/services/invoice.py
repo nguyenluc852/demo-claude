@@ -30,6 +30,7 @@ from app.core.constants import (
 from app.core.messages import EmailTemplate, ErrorMessage
 from app.db.mongo import get_collection
 from app.schemas.invoice import InvoiceDispatchResult, InvoiceLine, InvoiceSchema
+from app.schemas.tenant import TenantBalance
 from app.services.email import render_invoice_email, send_email
 from app.services.service_setting import service_setting_service
 
@@ -136,7 +137,7 @@ class InvoiceService:
             "room_charge": room_charge,
             "lines": [line.model_dump() for line in lines],
             Field.TOTAL: total,
-            "due_date": datetime.now(UTC) + timedelta(days=settings.payment_due_days),
+            Field.DUE_DATE: datetime.now(UTC) + timedelta(days=settings.payment_due_days),
         }
 
         if existing is None:
@@ -185,6 +186,49 @@ class InvoiceService:
 
     async def get(self, invoice_id: str) -> InvoiceSchema:
         return await self._decorate(await self.get_document(invoice_id))
+
+    async def balance_for(self, contract_id: str) -> TenantBalance:
+        """Sum what a contract still owes across every issued invoice.
+
+        Computed here rather than in the client because the invoice list is
+        paginated: adding up one page would quietly under-report a tenant who
+        has been here longer than a page.
+        """
+        cursor = self._collection.find(
+            {
+                Field.CONTRACT_ID: contract_id,
+                Field.STATUS: {"$in": list(InvoiceStatus.OUTSTANDING)},
+            }
+        ).sort(Field.PERIOD, -1)
+        documents = [doc async for doc in cursor]
+
+        if not documents:
+            return TenantBalance(
+                outstanding=0.0,
+                current_due=0.0,
+                previous_due=0.0,
+                unpaid_count=0,
+            )
+
+        def remaining(doc: dict[str, Any]) -> float:
+            return max(float(doc[Field.TOTAL]) - float(doc.get(Field.PAID_AMOUNT, 0.0)), 0.0)
+
+        # Sorted newest first, so the head is the period being billed now and the
+        # tail is whatever was left unsettled before it.
+        newest = documents[0]
+        current_due = remaining(newest)
+        previous_due = sum(remaining(doc) for doc in documents[1:])
+
+        due_dates = [doc[Field.DUE_DATE] for doc in documents if doc.get(Field.DUE_DATE)]
+
+        return TenantBalance(
+            outstanding=to_vnd(current_due + previous_due),
+            current_due=to_vnd(current_due),
+            previous_due=to_vnd(previous_due),
+            current_period=str(newest[Field.PERIOD]),
+            due_date=min(due_dates) if due_dates else None,
+            unpaid_count=len(documents),
+        )
 
     async def get_document(self, invoice_id: str) -> dict[str, Any]:
         document: dict[str, Any] | None = await self._collection.find_one(

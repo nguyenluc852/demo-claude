@@ -14,7 +14,7 @@ import {
   STRINGS,
 } from '../../constants'
 import { renderWithStore } from '../../test/utils'
-import type { Contract, Invoice, Room } from '../../types/models'
+import type { Contract, Invoice, Room, TenantBalance } from '../../types/models'
 import { formatDate, formatMoney, formatNumber } from '../../utils/format'
 import { serviceUnitLabel } from '../../utils/labels'
 import { TenantPortal } from './TenantPortal'
@@ -123,10 +123,38 @@ const ELECTRIC_AVERAGE = 100
 const WATER_LATEST = 6
 const WATER_AVERAGE = 5
 
-function stubTenantApi(invoices: Invoice[], activeContract: Contract = contract) {
+/**
+ * Kỳ 2026-07 còn thiếu 1.500.000 và kỳ 2026-08 nợ nguyên 2.400.000 — bốn con số
+ * đều khác nhau nên không assertion nào khớp nhầm ô bên cạnh.
+ */
+const OUTSTANDING_BALANCE: TenantBalance = {
+  outstanding: 3_900_000,
+  current_due: 2_400_000,
+  previous_due: 1_500_000,
+  current_period: '2026-08',
+  due_date: '2026-08-05T00:00:00',
+  unpaid_count: 2,
+}
+
+const SETTLED_BALANCE: TenantBalance = {
+  outstanding: 0,
+  current_due: 0,
+  previous_due: 0,
+  current_period: null,
+  due_date: null,
+  unpaid_count: 0,
+}
+
+function stubTenantApi(
+  invoices: Invoice[],
+  activeContract: Contract = contract,
+  balance: TenantBalance = OUTSTANDING_BALANCE,
+) {
   const fetchMock = vi.fn((input: string) => {
     if (input.endsWith(API_ROUTES.tenantMe)) {
-      return Promise.resolve(Response.json({ data: { contract: activeContract, room } }))
+      return Promise.resolve(
+        Response.json({ data: { contract: activeContract, room, balance } }),
+      )
     }
     if (input.endsWith(API_ROUTES.tenantInvoices)) {
       return Promise.resolve(
@@ -143,8 +171,12 @@ function stubTenantApi(invoices: Invoice[], activeContract: Contract = contract)
 }
 
 /** Waits for both thunks to settle so the portal has left its loading state. */
-async function renderPortal(invoices: Invoice[] = INVOICES, activeContract?: Contract) {
-  const fetchMock = stubTenantApi(invoices, activeContract)
+async function renderPortal(
+  invoices: Invoice[] = INVOICES,
+  activeContract?: Contract,
+  balance?: TenantBalance,
+) {
+  const fetchMock = stubTenantApi(invoices, activeContract, balance)
   renderWithStore(<TenantPortal />)
   await screen.findByText(STRINGS.tenant.invoicesHeading)
   await waitFor(() =>
@@ -185,6 +217,74 @@ function statValue(label: string): string | null {
 
 const latestLabel = (series: string) => `${STRINGS.tenant.usageLatest} · ${series}`
 const averageLabel = (series: string) => `${STRINGS.tenant.usageAverage} · ${series}`
+
+/**
+ * Số tiền của công nợ có thể trùng chuỗi với số trong bảng hóa đơn, nên mọi
+ * assertion về công nợ đều bị giới hạn trong đúng section của nó.
+ */
+function balanceSection() {
+  return within(
+    screen
+      .getByRole('heading', { name: STRINGS.tenant.balanceHeading })
+      .closest('section') as HTMLElement,
+  )
+}
+
+/** Reads the value out of a balance card by its label. */
+function balanceValue(label: string): string | null {
+  const card = balanceSection().getByText(label).closest('.stat') as HTMLElement
+  return card.querySelector('.stat-value')?.textContent?.replace(/\s+/g, ' ') ?? null
+}
+
+describe('TenantPortal balance', () => {
+  it('breaks the outstanding amount into this period and what was carried over', async () => {
+    await renderPortal(INVOICES, undefined, OUTSTANDING_BALANCE)
+
+    expect(balanceValue(STRINGS.tenant.balanceOutstanding)).toBe(
+      money(OUTSTANDING_BALANCE.outstanding),
+    )
+    expect(
+      balanceValue(`${STRINGS.tenant.balanceCurrent} · ${OUTSTANDING_BALANCE.current_period}`),
+    ).toBe(money(OUTSTANDING_BALANCE.current_due))
+    expect(balanceValue(STRINGS.tenant.balancePrevious)).toBe(
+      money(OUTSTANDING_BALANCE.previous_due),
+    )
+    expect(balanceValue(STRINGS.tenant.balanceDueDate)).toBe(
+      formatDate(OUTSTANDING_BALANCE.due_date),
+    )
+
+    expect(balanceSection().getByText(STRINGS.tenant.balanceCarryOver)).toBeInTheDocument()
+    expect(balanceSection().queryByText(STRINGS.tenant.balanceSettled)).toBeNull()
+  })
+
+  it('drops the carry-over note when nothing is left from earlier periods', async () => {
+    await renderPortal(INVOICES, undefined, {
+      ...OUTSTANDING_BALANCE,
+      outstanding: OUTSTANDING_BALANCE.current_due,
+      previous_due: 0,
+      unpaid_count: 1,
+    })
+
+    expect(balanceValue(STRINGS.tenant.balancePrevious)).toBe(money(0))
+    expect(balanceSection().queryByText(STRINGS.tenant.balanceCarryOver)).toBeNull()
+  })
+
+  it('replaces the cards with a settled notice when nothing is owed', async () => {
+    await renderPortal(INVOICES, undefined, SETTLED_BALANCE)
+
+    const section = balanceSection()
+    expect(section.getByText(STRINGS.tenant.balanceSettled)).toBeInTheDocument()
+    for (const label of [
+      STRINGS.tenant.balanceOutstanding,
+      STRINGS.tenant.balanceCurrent,
+      STRINGS.tenant.balancePrevious,
+      STRINGS.tenant.balanceDueDate,
+    ]) {
+      expect(section.queryByText(label, { exact: false })).toBeNull()
+    }
+    expect(section.queryByText(STRINGS.tenant.balanceCarryOver)).toBeNull()
+  })
+})
 
 describe('TenantPortal usage chart', () => {
   it('summarises the latest and the average of the electricity series', async () => {

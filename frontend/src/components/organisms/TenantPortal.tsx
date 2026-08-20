@@ -9,7 +9,7 @@ import {
 import type { Invoice, InvoiceLine } from '../../types/models'
 import { formatDate, formatMoney, formatNumber } from '../../utils/format'
 import { invoiceStatusLabel, invoiceStatusTone } from '../../utils/labels'
-import { Button, Spinner } from '../atoms'
+import { Button, Spinner, Text } from '../atoms'
 import {
   EmptyState,
   InvoiceLineTable,
@@ -77,8 +77,50 @@ export function TenantPortal() {
   const seriesLabel =
     series === SERVICE_CODE.water ? STRINGS.meter.columnWater : STRINGS.meter.columnElectric
 
+  const { balance } = overview
+
   return (
     <div className="stack">
+      <section className="card">
+        <div className="section-head">
+          <h2>{STRINGS.tenant.balanceHeading}</h2>
+        </div>
+
+        {balance.outstanding === 0 ? (
+          <Notice message={STRINGS.tenant.balanceSettled} tone="success" />
+        ) : (
+          <>
+            <div className="stat-grid">
+              <StatCard
+                label={STRINGS.tenant.balanceOutstanding}
+                value={formatMoney(balance.outstanding)}
+              />
+              <StatCard
+                label={
+                  balance.current_period
+                    ? `${STRINGS.tenant.balanceCurrent} · ${balance.current_period}`
+                    : STRINGS.tenant.balanceCurrent
+                }
+                value={formatMoney(balance.current_due)}
+              />
+              <StatCard
+                label={STRINGS.tenant.balancePrevious}
+                value={formatMoney(balance.previous_due)}
+              />
+              <StatCard
+                label={STRINGS.tenant.balanceDueDate}
+                value={formatDate(balance.due_date)}
+              />
+            </div>
+            {balance.previous_due > 0 ? (
+              <p>
+                <Text tone="muted">{STRINGS.tenant.balanceCarryOver}</Text>
+              </p>
+            ) : null}
+          </>
+        )}
+      </section>
+
       <section className="card">
         <div className="section-head">
           <h2>{STRINGS.tenant.usageHeading}</h2>
