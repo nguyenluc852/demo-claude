@@ -36,7 +36,7 @@ export function UserManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.user.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -54,9 +54,9 @@ export function UserManager() {
                 const isSelf = user.id === currentUser?.id
                 return (
                   <tr key={user.id}>
-                    <td>{user.username}</td>
-                    <td>{user.email}</td>
-                    <td>
+                    <td data-label={STRINGS.user.usernameLabel}>{user.username}</td>
+                    <td data-label={STRINGS.user.emailLabel}>{user.email}</td>
+                    <td data-label={STRINGS.user.roleLabel}>
                       <Select
                         value={user.role}
                         disabled={pending || isSelf}
@@ -74,7 +74,7 @@ export function UserManager() {
                         ))}
                       </Select>
                     </td>
-                    <td>
+                    <td data-label={STRINGS.user.verifiedLabel}>
                       <StatusBadge
                         label={
                           user.email_verified ? STRINGS.user.verified : STRINGS.user.unverified
@@ -82,7 +82,9 @@ export function UserManager() {
                         tone={user.email_verified ? 'positive' : 'warning'}
                       />
                     </td>
-                    <td className="num">{formatDate(user.created_at)}</td>
+                    <td className="num" data-label={STRINGS.user.createdLabel}>
+                      {formatDate(user.created_at)}
+                    </td>
                     <td>
                       <div className="row-actions">
                         <Button

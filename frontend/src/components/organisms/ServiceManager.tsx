@@ -104,7 +104,7 @@ export function ServiceManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.service.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -120,14 +120,18 @@ export function ServiceManager() {
             <tbody>
               {entities.map((service) => (
                 <tr key={service.id}>
-                  <td>
+                  <td data-label={STRINGS.service.codeLabel}>
                     <code>{service.code}</code>
                   </td>
-                  <td>{service.name}</td>
-                  <td className="num">{formatMoney(service.unit_price)}</td>
-                  <td>{serviceUnitLabel(service.unit)}</td>
-                  <td>{serviceCategoryLabel(service.category)}</td>
-                  <td>
+                  <td data-label={STRINGS.service.nameLabel}>{service.name}</td>
+                  <td className="num" data-label={STRINGS.service.priceLabel}>
+                    {formatMoney(service.unit_price)}
+                  </td>
+                  <td data-label={STRINGS.service.unitLabel}>{serviceUnitLabel(service.unit)}</td>
+                  <td data-label={STRINGS.service.categoryLabel}>
+                    {serviceCategoryLabel(service.category)}
+                  </td>
+                  <td data-label={STRINGS.service.activeLabel}>
                     <StatusBadge
                       label={
                         service.active

@@ -104,7 +104,7 @@ export function InvoiceManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.invoice.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -120,14 +120,18 @@ export function InvoiceManager() {
             <tbody>
               {entities.map((invoice) => (
                 <tr key={invoice.id}>
-                  <td>
+                  <td data-label={STRINGS.invoice.columnRoom}>
                     <strong className="num">{invoice.room_number}</strong>
                   </td>
-                  <td>{invoice.tenant_name}</td>
-                  <td className="num">{invoice.period}</td>
-                  <td className="num">{formatMoney(invoice.total)}</td>
-                  <td className="num">{formatMoney(invoice.paid_amount)}</td>
-                  <td>
+                  <td data-label={STRINGS.invoice.columnTenant}>{invoice.tenant_name}</td>
+                  <td className="num" data-label={STRINGS.invoice.columnPeriod}>{invoice.period}</td>
+                  <td className="num" data-label={STRINGS.invoice.columnTotal}>
+                    {formatMoney(invoice.total)}
+                  </td>
+                  <td className="num" data-label={STRINGS.invoice.columnPaid}>
+                    {formatMoney(invoice.paid_amount)}
+                  </td>
+                  <td data-label={STRINGS.invoice.columnStatus}>
                     <StatusBadge
                       label={invoiceStatusLabel(invoice.status)}
                       tone={invoiceStatusTone(invoice.status)}

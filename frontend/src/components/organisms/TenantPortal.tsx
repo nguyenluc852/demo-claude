@@ -171,7 +171,7 @@ export function TenantPortal() {
         {invoices.length === 0 ? (
           <EmptyState message={STRINGS.tenant.invoicesEmpty} />
         ) : (
-          <div className="table-scroll">
+          <div className="table-scroll table-cards">
             <table>
               <thead>
                 <tr>
@@ -190,22 +190,26 @@ export function TenantPortal() {
                   const water = lineFor(invoice, SERVICE_CODE.water);
                   return (
                     <tr key={invoice.id}>
-                      <td className="num">{invoice.period}</td>
-                      <td className="num">
+                      <td className="num" data-label={STRINGS.invoice.columnPeriod}>
+                        {invoice.period}
+                      </td>
+                      <td className="num" data-label={STRINGS.meter.columnElectric}>
                         {electric
                           ? `${electric.meter_old} → ${electric.meter_new}`
                           : STRINGS.common.unknown}
                       </td>
-                      <td className="num">
+                      <td className="num" data-label={STRINGS.meter.columnWater}>
                         {water
                           ? `${water.meter_old} → ${water.meter_new}`
                           : STRINGS.common.unknown}
                       </td>
-                      <td className="num">{formatMoney(invoice.total)}</td>
-                      <td className="num">
+                      <td className="num" data-label={STRINGS.invoice.columnTotal}>
+                        {formatMoney(invoice.total)}
+                      </td>
+                      <td className="num" data-label={STRINGS.invoice.columnPaid}>
                         {formatMoney(invoice.paid_amount)}
                       </td>
-                      <td>
+                      <td data-label={STRINGS.invoice.columnStatus}>
                         <StatusBadge
                           label={invoiceStatusLabel(invoice.status)}
                           tone={invoiceStatusTone(invoice.status)}

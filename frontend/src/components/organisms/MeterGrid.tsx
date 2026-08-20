@@ -117,7 +117,7 @@ export function MeterGrid() {
       {status === STATUS.succeeded && rows.length === 0 ? (
         <EmptyState message={STRINGS.meter.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>

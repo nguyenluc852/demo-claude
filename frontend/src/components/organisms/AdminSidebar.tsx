@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { ROUTE_PATH, SLICE, STRINGS, USER_ROLE } from '../../constants'
@@ -16,18 +17,38 @@ const LINKS = [
   { to: ROUTE_PATH.adminLeads, label: STRINGS.nav.leads, end: false },
 ] as const
 
+const NAV_ID = 'admin-nav'
+
 export function AdminSidebar() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state[SLICE.auth])
+  /* Only consulted below the shell's breakpoint, where the rail becomes a bar
+     across the top: eight links laid out there cost several rows of screen. On
+     a desktop the rail is always open and this stays false. */
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <aside className="admin-sidebar">
+    <aside className="admin-sidebar" data-menu-open={menuOpen}>
       <div className="admin-brand">
-        <Logo />
+        <div className="admin-brand-row">
+          <Logo />
+          <Button
+            className="admin-menu-toggle"
+            variant="secondary"
+            size="sm"
+            aria-expanded={menuOpen}
+            aria-controls={NAV_ID}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {STRINGS.nav.menu}
+          </Button>
+        </div>
         <small>{STRINGS.app.tagline}</small>
       </div>
 
-      <nav className="admin-nav">
+      {/* Closing on navigation: the panel covers the page it just moved to,
+          so leaving it open would hide the result of the tap. */}
+      <nav className="admin-nav" id={NAV_ID} onClick={() => setMenuOpen(false)}>
         {LINKS.map((link) => (
           <NavLink key={link.to} to={link.to} end={link.end}>
             {link.label}

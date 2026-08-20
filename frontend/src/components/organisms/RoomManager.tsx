@@ -145,7 +145,7 @@ export function RoomManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.room.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -161,16 +161,20 @@ export function RoomManager() {
             <tbody>
               {entities.map((room) => (
                 <tr key={room.id}>
-                  <td>
+                  <td data-label={STRINGS.room.numberLabel}>
                     <strong className="num">{room.room_number}</strong>
                   </td>
-                  <td className="num">{room.floor}</td>
-                  <td>{roomTypeLabel(room.room_type)}</td>
-                  <td className="num">
+                  <td className="num" data-label={STRINGS.room.floorLabel}>
+                    {room.floor}
+                  </td>
+                  <td data-label={STRINGS.room.typeLabel}>{roomTypeLabel(room.room_type)}</td>
+                  <td className="num" data-label={STRINGS.room.areaLabel}>
                     {room.area} {STRINGS.room.areaUnit}
                   </td>
-                  <td className="num">{formatMoney(room.base_price)}</td>
-                  <td>
+                  <td className="num" data-label={STRINGS.room.priceLabel}>
+                    {formatMoney(room.base_price)}
+                  </td>
+                  <td data-label={STRINGS.room.statusLabel}>
                     <StatusBadge
                       label={roomStatusLabel(room.status)}
                       tone={roomStatusTone(room.status)}

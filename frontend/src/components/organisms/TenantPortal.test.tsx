@@ -492,3 +492,47 @@ describe('TenantPortal invoice arrears', () => {
     expect(detail.queryByText(STRINGS.tenant.invoiceAmountDue)).toBeNull()
   })
 })
+
+/*
+ * The card layout on a phone is pure CSS: `td::before` prints `data-label`
+ * once the header row is visually hidden. jsdom applies no media query, so the
+ * layout itself is untestable here — what is testable is that every data cell
+ * still carries the label the card view would otherwise lose.
+ */
+describe('TenantPortal invoice table card labels', () => {
+  const COLUMNS = [
+    STRINGS.invoice.columnPeriod,
+    STRINGS.meter.columnElectric,
+    STRINGS.meter.columnWater,
+    STRINGS.invoice.columnTotal,
+    STRINGS.invoice.columnPaid,
+    STRINGS.invoice.columnStatus,
+  ]
+
+  it('labels every data cell with its own column heading', async () => {
+    await renderPortal()
+
+    const table = screen.getByRole('table')
+    const headings = within(table)
+      .getAllByRole('columnheader')
+      .map((cell) => cell.textContent)
+    expect(headings).toEqual([...COLUMNS, STRINGS.common.actions])
+
+    for (const row of within(table).getAllByRole('row').slice(1)) {
+      const cells = within(row).getAllByRole('cell')
+      expect(cells).toHaveLength(headings.length)
+      COLUMNS.forEach((column, index) => {
+        expect(cells[index]).toHaveAttribute('data-label', column)
+      })
+    }
+  })
+
+  it('leaves the action cell unlabelled, since a button needs no caption', async () => {
+    await renderPortal()
+
+    for (const row of within(screen.getByRole('table')).getAllByRole('row').slice(1)) {
+      const cells = within(row).getAllByRole('cell')
+      expect(cells[cells.length - 1]).not.toHaveAttribute('data-label')
+    }
+  })
+})

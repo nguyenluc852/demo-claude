@@ -152,7 +152,7 @@ export function ContractManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.contract.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -169,12 +169,14 @@ export function ContractManager() {
             <tbody>
               {entities.map((contract) => (
                 <tr key={contract.id}>
-                  <td>
+                  <td data-label={STRINGS.contract.roomLabel}>
                     <strong className="num">{contract.room_number}</strong>
                   </td>
-                  <td>{contract.tenant_name}</td>
-                  <td className="num">{contract.tenant_phone}</td>
-                  <td>
+                  <td data-label={STRINGS.contract.tenantNameLabel}>{contract.tenant_name}</td>
+                  <td className="num" data-label={STRINGS.contract.phoneLabel}>
+                    {contract.tenant_phone}
+                  </td>
+                  <td data-label={STRINGS.contract.emailLabel}>
                     <div className="toolbar">
                       <span>{contract.tenant_email}</span>
                       <StatusBadge
@@ -187,9 +189,13 @@ export function ContractManager() {
                       />
                     </div>
                   </td>
-                  <td className="num">{formatDate(contract.end_date)}</td>
-                  <td className="num">{formatMoney(contract.deposit)}</td>
-                  <td>
+                  <td className="num" data-label={STRINGS.contract.endLabel}>
+                    {formatDate(contract.end_date)}
+                  </td>
+                  <td className="num" data-label={STRINGS.contract.depositLabel}>
+                    {formatMoney(contract.deposit)}
+                  </td>
+                  <td data-label={STRINGS.contract.statusLabel}>
                     <StatusBadge
                       label={contractStatusLabel(contract.status)}
                       tone={contractStatusTone(contract.status)}

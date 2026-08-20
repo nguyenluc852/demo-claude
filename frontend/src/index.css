@@ -437,6 +437,9 @@ textarea:disabled {
 
 .table-scroll {
   overflow-x: auto;
+  /* Swiping a wide table to its end must not hand the gesture on to the
+     browser's back navigation. */
+  overscroll-behavior-x: contain;
 }
 
 table {
@@ -882,21 +885,72 @@ tbody tr:hover {
   font-size: 1.5rem;
 }
 
+/* The toggle only exists below the shell breakpoint; on a desktop the rail is
+   permanently open and a button that never collapses anything is noise. */
+.admin-menu-toggle {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .admin-shell {
     grid-template-columns: 1fr;
   }
+
   .admin-sidebar {
     position: sticky;
     top: 0;
     z-index: 20;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
   }
+
+  .admin-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .admin-menu-toggle {
+    display: inline-flex;
+  }
+
+  /* The tagline is a desktop flourish; on a phone it pushes the content down
+     for no navigational gain. */
+  .admin-brand small {
+    display: none;
+  }
+
+  /* Collapsed by default. Eight links wrapped across the top cost roughly a
+     third of a phone screen before the page itself starts. */
+  .admin-sidebar[data-menu-open='false'] .admin-nav,
+  .admin-sidebar[data-menu-open='false'] .admin-foot {
+    display: none;
+  }
+
   .admin-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
   }
+
+  .admin-foot {
+    margin-top: var(--space-2);
+  }
+
   .admin-main {
     padding: var(--space-4);
+  }
+
+  /* 13rem is a desktop minimum that stops a filter shrinking between its
+     neighbours. On a phone the filters are stacked, so it only pushes them off
+     the edge — let each take the row it already has. */
+  .toolbar {
+    width: 100%;
+  }
+
+  .toolbar input,
+  .toolbar select {
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -1812,16 +1866,92 @@ tbody tr:hover {
     padding: var(--space-2);
   }
 
-  /* Swiping a wide table sideways must not hand the gesture to the browser's
-     back navigation once it reaches the end. */
-  .table-scroll {
-    overscroll-behavior-x: contain;
-  }
-
   /* 1.6rem is a desktop headline size: in a wrapped two-up column it needs
      163px for a figure like 5.445.000 ₫ and the cell is 129px, and `.num`
      cannot break mid-number. */
   .invoice-total b {
     font-size: 1.2rem;
+  }
+}
+
+
+/* --- Tables that become cards -----------------------------------------
+   A ledger with seven columns cannot be read on a phone, and swiping it
+   sideways competes with the browser's back gesture. Marking the scroll
+   wrapper `.table-cards` folds each row into a stacked card below the admin
+   breakpoint: same markup, same single source of truth, no duplicated JSX.
+
+   Each `<td>` carries `data-label` — the column heading it lost when `thead`
+   went away. A cell with no label is a controls cell and spans the card. */
+
+@media (max-width: 860px) {
+  .table-cards {
+    overflow-x: visible;
+  }
+
+  .table-cards thead {
+    /* Not `display: none`: that drops the headings out of the accessibility
+       tree too, and a screen reader still pairs them with the cells. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table-cards table,
+  .table-cards tbody,
+  .table-cards tr,
+  .table-cards td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-cards tr {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-3);
+  }
+
+  .table-cards tr:hover {
+    background: var(--color-surface);
+  }
+
+  .table-cards td {
+    border: none;
+    padding: var(--space-2) 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    text-align: right;
+  }
+
+  .table-cards td::before {
+    content: attr(data-label);
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-align: left;
+    flex: none;
+  }
+
+  /* A controls cell has no heading of its own: let it use the full width. */
+  .table-cards td:not([data-label]) {
+    justify-content: flex-end;
+    padding-top: var(--space-3);
+  }
+
+  .table-cards td:not([data-label])::before {
+    content: none;
+  }
+
+  /* Inputs must not shrink to nothing against a long label. */
+  .table-cards td .meter-pair,
+  .table-cards td .row-actions {
+    justify-content: flex-end;
   }
 }

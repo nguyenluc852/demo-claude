@@ -40,11 +40,13 @@ export function MeterGridRow({
 }: MeterGridRowProps) {
   return (
     <tr>
-      <td>
+      <td data-label={STRINGS.meter.columnRoom}>
         <strong className="num">{row.room_number}</strong>
       </td>
-      <td>{row.tenant_name ?? STRINGS.common.unknown}</td>
-      <td>
+      <td data-label={STRINGS.meter.columnTenant}>
+        {row.tenant_name ?? STRINGS.common.unknown}
+      </td>
+      <td data-label={STRINGS.meter.columnElectric}>
         <div className="meter-pair">
           <span className="meter-old">
             {STRINGS.meter.oldLabel} {formatNumber(row.electric_old)}
@@ -61,7 +63,7 @@ export function MeterGridRow({
           <span className="meter-old">{usage(electric, row.electric_old)}</span>
         </div>
       </td>
-      <td>
+      <td data-label={STRINGS.meter.columnWater}>
         <div className="meter-pair">
           <span className="meter-old">
             {STRINGS.meter.oldLabel} {formatNumber(row.water_old)}

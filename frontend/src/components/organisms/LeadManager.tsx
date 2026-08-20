@@ -35,7 +35,7 @@ export function LeadManager() {
       {status === STATUS.succeeded && entities.length === 0 ? (
         <EmptyState message={STRINGS.lead.empty} />
       ) : (
-        <div className="table-scroll">
+        <div className="table-scroll table-cards">
           <table>
             <thead>
               <tr>
@@ -54,13 +54,17 @@ export function LeadManager() {
                 const pending = pendingIds.includes(lead.id)
                 return (
                   <tr key={lead.id}>
-                    <td className="num">{formatDate(lead.created_at)}</td>
-                    <td>{lead.name}</td>
-                    <td className="num">{lead.phone}</td>
-                    <td>{lead.email ?? STRINGS.common.unknown}</td>
-                    <td className="num">{lead.room_number ?? STRINGS.common.unknown}</td>
-                    <td>{lead.message ?? STRINGS.common.unknown}</td>
-                    <td>
+                    <td className="num" data-label={STRINGS.lead.createdLabel}>
+                      {formatDate(lead.created_at)}
+                    </td>
+                    <td data-label={STRINGS.lead.nameLabel}>{lead.name}</td>
+                    <td className="num" data-label={STRINGS.lead.phoneLabel}>{lead.phone}</td>
+                    <td data-label={STRINGS.lead.emailLabel}>{lead.email ?? STRINGS.common.unknown}</td>
+                    <td className="num" data-label={STRINGS.lead.roomLabel}>
+                      {lead.room_number ?? STRINGS.common.unknown}
+                    </td>
+                    <td data-label={STRINGS.lead.messageLabel}>{lead.message ?? STRINGS.common.unknown}</td>
+                    <td data-label={STRINGS.lead.statusLabel}>
                       <Select
                         value={lead.status}
                         disabled={pending}

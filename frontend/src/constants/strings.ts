@@ -41,6 +41,7 @@ export const STRINGS = {
     unknown: '—',
   },
   nav: {
+    menu: 'Menu',
     home: 'Trang chủ',
     login: 'Đăng nhập',
     logout: 'Đăng xuất',
