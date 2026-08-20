@@ -4,13 +4,14 @@ Signing a contract is the event that provisions the tenant's login and flips the
 room to occupied; terminating one hands the room back to the available pool.
 """
 
+import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from bson import ObjectId
 
 from app.common.documents import serialize, to_object_id
-from app.common.exceptions import ConflictError, NotFoundError
+from app.common.exceptions import ConflictError, EmailDeliveryError, NotFoundError
 from app.core.constants import Business, Collection, ContractStatus, Field, RoomStatus
 from app.core.messages import ErrorMessage
 from app.db.mongo import get_collection
@@ -18,6 +19,8 @@ from app.schemas.contract import ContractCreate, ContractSchema, ContractUpdate
 from app.services.auth import send_verification_email
 from app.services.room import room_service
 from app.services.user import user_service
+
+logger = logging.getLogger(__name__)
 
 _LIVE_STATUSES = (ContractStatus.ACTIVE, ContractStatus.EXPIRING, ContractStatus.OVERDUE)
 
@@ -33,6 +36,28 @@ def derive_status(current: str, end_date: datetime) -> str:
     if deadline - now <= timedelta(days=Business.EXPIRING_WINDOW_DAYS):
         return ContractStatus.EXPIRING
     return current if current == ContractStatus.OVERDUE else ContractStatus.ACTIVE
+
+
+
+async def _send_verification(email: str, token: str) -> None:
+    """Mail the verification link, but never let the provider undo the signing.
+
+    The contract, the room status and the tenant account are already written by
+    the time this runs, and there is no transaction to roll them back. Failing
+    the request here reported an error for work that had in fact succeeded, and
+    the next attempt hit "room already occupied" with no explanation.
+
+    The tenant stays unverified and visible as such in the contract list, where
+    staff can send the link again.
+    """
+    try:
+        await send_verification_email(email, token)
+    except EmailDeliveryError:
+        logger.warning(
+            "Contract signed for %s but the verification email was refused; "
+            "the tenant stays unverified until it is sent again.",
+            email,
+        )
 
 
 class ContractService:
@@ -102,7 +127,7 @@ class ContractService:
             contract_id=result.inserted_id,
         )
         if token:
-            await send_verification_email(payload.tenant_email, token)
+            await _send_verification(payload.tenant_email, token)
 
         return await self._decorate(document)
 
@@ -126,7 +151,7 @@ class ContractService:
                 phone=str(changes.get("tenant_phone", existing["tenant_phone"])),
                 contract_id=existing[Field.ID],
             ) or await user_service.reset_verification(str(new_email), existing[Field.ID])
-            await send_verification_email(str(new_email), token)
+            await _send_verification(str(new_email), token)
 
         if changes.get(Field.STATUS) == ContractStatus.TERMINATED:
             await room_service.set_status(
