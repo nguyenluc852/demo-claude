@@ -1,8 +1,8 @@
-import { SiteHeader, TenantNav, TenantPortal } from '../components/organisms'
+import { SiteHeader, TenantNav, TenantProfile } from '../components/organisms'
 import { PageTemplate, SiteLayout } from '../components/templates'
 import { STRINGS } from '../constants'
 
-export function TenantPage() {
+export function TenantProfilePage() {
   return (
     <SiteLayout
       header={<SiteHeader />}
@@ -13,8 +13,8 @@ export function TenantPage() {
       }
     >
       <div className="site-wrap site-section">
-        <PageTemplate title={STRINGS.tenant.heading} status={<TenantNav />}>
-          <TenantPortal />
+        <PageTemplate title={STRINGS.tenant.profilePageHeading} status={<TenantNav />}>
+          <TenantProfile />
         </PageTemplate>
       </div>
     </SiteLayout>

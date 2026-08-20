@@ -1,33 +1,61 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import { SLICE, STATUS, STRINGS } from '../../constants'
+import { SERVICE_CODE, SLICE, STATUS, STRINGS } from '../../constants'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 import {
   fetchTenantInvoices,
   fetchTenantOverview,
 } from '../../store/slices/tenantSlice'
-import { formatDate, formatMoney } from '../../utils/format'
-import {
-  contractStatusLabel,
-  contractStatusTone,
-  invoiceStatusLabel,
-  invoiceStatusTone,
-  paymentCycleLabel,
-  roomStatusLabel,
-  roomStatusTone,
-  roomTypeLabel,
-} from '../../utils/labels'
-import { Spinner, Text } from '../atoms'
-import { EmptyState, Notice, StatCard, StatusBadge } from '../molecules'
+import type { Invoice, InvoiceLine } from '../../types/models'
+import { formatDate, formatMoney, formatNumber } from '../../utils/format'
+import { invoiceStatusLabel, invoiceStatusTone, serviceUnitLabel } from '../../utils/labels'
+import { Button, Spinner } from '../atoms'
+import { EmptyState, Modal, Notice, StatCard, StatusBadge, Tabs, UsageChart } from '../molecules'
+import type { UsagePoint } from '../molecules'
+
+/* The two series read their colour from the palette rather than carrying a hex:
+   the accent for electricity, the support green for water. */
+const COLOR_ELECTRIC = 'var(--orange-600)'
+const COLOR_WATER = 'var(--sage-600)'
+
+const SERIES_OPTIONS = [
+  [SERVICE_CODE.electricity, STRINGS.meter.columnElectric],
+  [SERVICE_CODE.water, STRINGS.meter.columnWater],
+] as const
+
+/** Finds a charge by its service code — never by position in the line list. */
+function lineFor(invoice: Invoice, code: string): InvoiceLine | undefined {
+  return invoice.lines.find((line) => line.code === code)
+}
+
+/** Oldest period first, so the chart reads left to right in time. */
+function usagePoints(invoices: readonly Invoice[], code: string): UsagePoint[] {
+  return invoices
+    .filter((invoice) => lineFor(invoice, code) !== undefined)
+    .map((invoice) => ({ period: invoice.period, usage: lineFor(invoice, code)!.quantity }))
+    .reverse()
+}
 
 export function TenantPortal() {
   const dispatch = useAppDispatch()
   const { overview, invoices, status, error } = useAppSelector((state) => state[SLICE.tenant])
+  const [selected, setSelected] = useState<Invoice | null>(null)
+  const [series, setSeries] = useState<string>(SERVICE_CODE.electricity)
 
   useEffect(() => {
     void dispatch(fetchTenantOverview())
     void dispatch(fetchTenantInvoices())
   }, [dispatch])
+
+  const points = useMemo(() => usagePoints(invoices, series), [invoices, series])
+
+  const summary = useMemo(() => {
+    if (points.length === 0) {
+      return null
+    }
+    const total = points.reduce((sum, point) => sum + point.usage, 0)
+    return { average: total / points.length, latest: points[points.length - 1]!.usage }
+  }, [points])
 
   if (status === STATUS.loading || status === STATUS.idle) {
     return <Spinner label={STRINGS.common.loading} />
@@ -37,50 +65,40 @@ export function TenantPortal() {
     return <Notice message={error ?? STRINGS.tenant.noContract} tone="danger" />
   }
 
-  const { contract, room } = overview
+  const seriesLabel =
+    series === SERVICE_CODE.water ? STRINGS.meter.columnWater : STRINGS.meter.columnElectric
 
   return (
     <div className="stack">
       <section className="card">
         <div className="section-head">
-          <h2>{STRINGS.tenant.contractHeading}</h2>
-          <StatusBadge
-            label={contractStatusLabel(contract.status)}
-            tone={contractStatusTone(contract.status)}
+          <h2>{STRINGS.tenant.usageHeading}</h2>
+          <Tabs
+            label={STRINGS.tenant.usageHeading}
+            value={series}
+            options={SERIES_OPTIONS}
+            onChange={setSeries}
           />
         </div>
-        <div className="stat-grid">
-          <StatCard label={STRINGS.contract.startLabel} value={formatDate(contract.start_date)} />
-          <StatCard label={STRINGS.contract.endLabel} value={formatDate(contract.end_date)} />
-          <StatCard label={STRINGS.contract.depositLabel} value={formatMoney(contract.deposit)} />
-          <StatCard
-            label={STRINGS.contract.cycleLabel}
-            value={paymentCycleLabel(contract.payment_cycle)}
-          />
-        </div>
-      </section>
 
-      <section className="card">
-        <div className="section-head">
-          <h2>
-            {STRINGS.tenant.roomHeading} · {room.room_number}
-          </h2>
-          <StatusBadge label={roomStatusLabel(room.status)} tone={roomStatusTone(room.status)} />
-        </div>
-        <div className="stat-grid">
-          <StatCard label={STRINGS.room.typeLabel} value={roomTypeLabel(room.room_type)} />
-          <StatCard
-            label={STRINGS.room.areaLabel}
-            value={`${room.area} ${STRINGS.room.areaUnit}`}
-          />
-          <StatCard label={STRINGS.room.priceLabel} value={formatMoney(room.base_price)} />
-          <StatCard label={STRINGS.room.floorLabel} value={String(room.floor)} />
-        </div>
-        {room.amenities.length > 0 ? (
-          <p>
-            <Text tone="muted">{room.amenities.join(' · ')}</Text>
-          </p>
+        {summary ? (
+          <div className="stat-grid">
+            <StatCard
+              label={`${STRINGS.tenant.usageLatest} · ${seriesLabel}`}
+              value={formatNumber(summary.latest)}
+            />
+            <StatCard
+              label={`${STRINGS.tenant.usageAverage} · ${seriesLabel}`}
+              value={formatNumber(summary.average)}
+            />
+          </div>
         ) : null}
+
+        <UsageChart
+          points={points}
+          label={seriesLabel}
+          color={series === SERVICE_CODE.water ? COLOR_WATER : COLOR_ELECTRIC}
+        />
       </section>
 
       <section className="card">
@@ -101,12 +119,13 @@ export function TenantPortal() {
                   <th className="num">{STRINGS.invoice.columnTotal}</th>
                   <th className="num">{STRINGS.invoice.columnPaid}</th>
                   <th>{STRINGS.invoice.columnStatus}</th>
+                  <th>{STRINGS.common.actions}</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.map((invoice) => {
-                  const electric = invoice.lines.find((line) => line.meter_new !== null)
-                  const water = invoice.lines.filter((line) => line.meter_new !== null).at(1)
+                  const electric = lineFor(invoice, SERVICE_CODE.electricity)
+                  const water = lineFor(invoice, SERVICE_CODE.water)
                   return (
                     <tr key={invoice.id}>
                       <td className="num">{invoice.period}</td>
@@ -128,6 +147,16 @@ export function TenantPortal() {
                           tone={invoiceStatusTone(invoice.status)}
                         />
                       </td>
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`${STRINGS.tenant.invoiceDetailAction} ${invoice.period}`}
+                          onClick={() => setSelected(invoice)}
+                        >
+                          {STRINGS.tenant.invoiceDetailAction}
+                        </Button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -136,6 +165,73 @@ export function TenantPortal() {
           </div>
         )}
       </section>
+
+      {selected ? (
+        <Modal
+          title={`${STRINGS.invoice.detailHeading} · ${selected.period}`}
+          onClose={() => setSelected(null)}
+        >
+          <div className="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>{STRINGS.invoice.lineDescription}</th>
+                  <th className="num">{STRINGS.invoice.lineOld}</th>
+                  <th className="num">{STRINGS.invoice.lineNew}</th>
+                  <th className="num">{STRINGS.invoice.lineUsage}</th>
+                  <th className="num">{STRINGS.invoice.lineUnitPrice}</th>
+                  <th className="num">{STRINGS.invoice.lineAmount}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{STRINGS.invoice.rentLine}</td>
+                  <td className="num">{STRINGS.common.unknown}</td>
+                  <td className="num">{STRINGS.common.unknown}</td>
+                  <td className="num">1</td>
+                  <td className="num">{formatMoney(selected.room_charge)}</td>
+                  <td className="num">{formatMoney(selected.room_charge)}</td>
+                </tr>
+                {selected.lines.map((line) => (
+                  <tr key={line.code}>
+                    <td>
+                      {line.name}
+                      <br />
+                      <span data-tone="muted">{serviceUnitLabel(line.unit)}</span>
+                    </td>
+                    <td className="num">{formatNumber(line.meter_old)}</td>
+                    <td className="num">{formatNumber(line.meter_new)}</td>
+                    <td className="num">{formatNumber(line.quantity)}</td>
+                    <td className="num">{formatMoney(line.unit_price)}</td>
+                    <td className="num">{formatMoney(line.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="invoice-total">
+            <div>
+              <div className="stat-label">{STRINGS.invoice.totalLabel}</div>
+              <b className="num">{formatMoney(selected.total)}</b>
+            </div>
+            <div>
+              <div className="stat-label">{STRINGS.invoice.columnPaid}</div>
+              <strong className="num">{formatMoney(selected.paid_amount)}</strong>
+            </div>
+            <div>
+              <div className="stat-label">{STRINGS.tenant.invoiceRemainingLabel}</div>
+              <strong className="num">
+                {formatMoney(Math.max(selected.total - selected.paid_amount, 0))}
+              </strong>
+            </div>
+            <div>
+              <div className="stat-label">{STRINGS.invoice.dueLabel}</div>
+              <strong className="num">{formatDate(selected.due_date)}</strong>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </div>
   )
 }

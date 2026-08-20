@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { render } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { Provider } from 'react-redux'
+import { MemoryRouter } from 'react-router-dom'
 
 import { SLICE } from '../constants'
 import authReducer from '../store/slices/authSlice'
@@ -37,9 +38,26 @@ export function makeStore() {
   })
 }
 
-export function renderWithStore(ui: ReactElement, store = makeStore()) {
+interface RenderOptions {
+  /** Wraps the tree in a `MemoryRouter` starting at these entries. Omitted means
+   *  no router at all, which is what every non-routing component expects. */
+  initialEntries?: string[]
+}
+
+export function renderWithStore(
+  ui: ReactElement,
+  store = makeStore(),
+  options: RenderOptions = {},
+) {
+  const { initialEntries } = options
+
   function Wrapper({ children }: { children: ReactNode }) {
-    return <Provider store={store}>{children}</Provider>
+    const tree = initialEntries ? (
+      <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+    ) : (
+      children
+    )
+    return <Provider store={store}>{tree}</Provider>
   }
 
   return { store, ...render(ui, { wrapper: Wrapper }) }

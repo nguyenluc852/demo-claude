@@ -16,6 +16,7 @@ import {
   RoomsPage,
   ServicesPage,
   TenantPage,
+  TenantProfilePage,
   UsersPage,
   VerifyEmailPage,
 } from './pages'
@@ -59,6 +60,14 @@ export default function App() {
           element={
             <RequireRole roles={TENANT_ONLY}>
               <TenantPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path={ROUTE_PATH.tenantProfile}
+          element={
+            <RequireRole roles={TENANT_ONLY}>
+              <TenantProfilePage />
             </RequireRole>
           }
         />

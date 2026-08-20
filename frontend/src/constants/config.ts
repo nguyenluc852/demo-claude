@@ -82,6 +82,14 @@ export const SERVICE_CATEGORY = {
   fixed: 'fixed',
 } as const
 
+/** Mirrors `ServiceCode` in `app/core/constants.py`: the codes the invoice
+ *  formula reads directly, so a meter reading can be found on an invoice line
+ *  by code instead of by position. */
+export const SERVICE_CODE = {
+  electricity: 'electricity',
+  water: 'water',
+} as const
+
 export const SERVICE_UNIT = {
   perKwh: 'kwh',
   perCubicMeter: 'm3',
@@ -123,6 +131,7 @@ export const ROUTE_PATH = {
   adminUsers: '/admin/users',
   adminLeads: '/admin/leads',
   tenant: '/tenant',
+  tenantProfile: '/tenant/profile',
 } as const
 
 /** Locale used for every currency and number format in the UI. */
